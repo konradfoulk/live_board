@@ -4,6 +4,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// client structure
 type client struct {
 	socket  *websocket.Conn
 	receive chan []byte
