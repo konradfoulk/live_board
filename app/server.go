@@ -25,43 +25,6 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
-// func homePage(w http.ResponseWriter, r *http.Request) {
-// 	html := `
-// 	<!DOCTYPE html>
-// 	<html>
-// 	<head><title>WebSocket Test</title></head>
-// 	<body>
-// 		<h1>Simple WebSocket Test</h1>
-// 		<input type="text" id="messageInput" placeholder="Type a message">
-// 		<button onclick="sendMessage()">Send</button>
-// 		<div id="messages"></div>
-
-// 		<script>
-// 			// Connect to WebSocket
-// 			const ws = new WebSocket('ws://localhost:8080/ws');
-
-// 			ws.onopen = () => {
-// 				console.log('Connected!');
-// 				document.getElementById('messages').innerHTML += '<p>Connected to server!</p>';
-// 			};
-
-// 			ws.onmessage = (event) => {
-// 				document.getElementById('messages').innerHTML += '<p>Server says: ' + event.data + '</p>';
-// 			};
-
-// 			function sendMessage() {
-// 				const input = document.getElementById('messageInput');
-// 				ws.send(input.value);
-// 				document.getElementById('messages').innerHTML += '<p>You: ' + input.value + '</p>';
-// 				input.value = '';
-// 			}
-// 		</script>
-// 	</body>
-// 	</html>`
-
-// 	fmt.Fprintf(w, html)
-// }
-
 func handleWebSocket(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("WebSocket endpoint hit")
 
