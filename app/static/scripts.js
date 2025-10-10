@@ -3,16 +3,16 @@ const ws = new WebSocket("ws://localhost:8080/ws")
 
 ws.onopen = () => {
     console.log("Connected!");
-    document.getElementById("messages").innerHTML += "Connected to server!\n";
+    document.getElementById("messages").innerHTML += "<p>Connected to server!</p>";
 };
 
 ws.onmessage = e => {
-    document.querySelector("#messages").innerHTML += "Serer says" + e.data + "\n";
+    document.querySelector("#messages").innerHTML += "<p>Server says: " + e.data + "</p>";
 };
 
 function sendMessage() {
     const input = document.querySelector("#messageInput");
     ws.send(input.value);
-    document.querySelector("#messages").innerHTML += "You:" + input.value + "\n";
+    document.querySelector("#messages").innerHTML += "<p>You: " + input.value + "</p>";
     input.value = "";
 }
