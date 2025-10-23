@@ -1,0 +1,47 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    height: 100vh;
+    width: 100vw;
+}
+
+main {
+    height: 100%;
+    width: 100%;
+    display: flex;
+}
+
+#rooms {
+    width: 250px;
+    background-color: red;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+}
+
+#content {
+    flex: 1;
+    background-color: green;
+    overflow: auto;
+}
+
+#roomList {
+    flex: 1;
+    width: 100%;
+    overflow: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+#roomList button {
+    flex-shrink: 0;
+    text-align: left;
+    overflow: hidden;
+    text-wrap: nowrap;
+    margin: 4px;
+}

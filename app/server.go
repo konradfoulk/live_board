@@ -15,18 +15,18 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
-type Client struct {
-	conn *websocket.Conn
-	hub  *Hub
-	send chan []byte
-}
+// type Client struct {
+// 	conn *websocket.Conn
+// 	hub  *Hub
+// 	send chan []byte
+// }
 
-type Hub struct {
-	clients    map[*Client]bool
-	broadcast  chan []byte
-	register   chan *Client
-	unregister chan *Client
-}
+// type Hub struct {
+// 	clients    map[*Client]bool
+// 	broadcast  chan []byte
+// 	register   chan *Client
+// 	unregister chan *Client
+// }
 
 func newHub() *Hub {
 	return &Hub{
@@ -93,20 +93,20 @@ func (c *Client) writePump() {
 	c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 }
 
-func main() {
-	var hub = newHub()
-	go hub.run()
+// func main() {
+// 	var hub = newHub()
+// 	go hub.run()
 
-	// create routes
-	fs := http.FileServer(http.Dir("./static"))
-	http.Handle("/", fs)
-	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-		handleWebSocket(hub, w, r)
-	})
+// 	// create routes
+// 	fs := http.FileServer(http.Dir("./static"))
+// 	http.Handle("/", fs)
+// 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+// 		handleWebSocket(hub, w, r)
+// 	})
 
-	fmt.Println("Chat server starting on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
-}
+// 	fmt.Println("Chat server starting on :8080")
+// 	log.Fatal(http.ListenAndServe(":8080", nil))
+// }
 
 func handleWebSocket(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	fmt.Println("WebSocket endpoint hit")
