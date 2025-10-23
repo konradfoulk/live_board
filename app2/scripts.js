@@ -17,11 +17,8 @@ function newRoom() {
     selectAllText(newBtn)
 
 
-    // let roomCreated = false;
+    // stop editing and create room
     const finishEditing = () => {
-        // if (roomCreated) return;
-        // roomCreated = True
-
         newBtn.contentEtible = false;
         const roomName = newBtn.textContent.trim();
 
@@ -52,5 +49,9 @@ function selectAllText(element) {
 }
 
 async function createRoom(roomName) {
+    // send to backend
     console.log(roomName);
+
+    // create room on frontend
+    
 }
