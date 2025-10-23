@@ -19,7 +19,7 @@ function newRoom() {
 
     // stop editing and create room
     const finishEditing = () => {
-        newBtn.contentEtible = false;
+        newBtn.contentEditable = false;
         const roomName = newBtn.textContent.trim();
 
         if (roomName === '' || roomName === 'New Room') {

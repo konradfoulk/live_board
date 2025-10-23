@@ -17,7 +17,7 @@ main {
 
 #rooms {
     width: 250px;
-    background-color: red;
+    background-color: gray;
     overflow: auto;
     display: flex;
     flex-direction: column;
@@ -42,7 +42,7 @@ main {
 
 #content {
     flex: 1;
-    background-color: green;
+    background-color: lightgray;
 }
 
 .room {
@@ -54,7 +54,7 @@ main {
 
 .chat {
     flex: 1;
-    background-color: blue;
+    background-color: darkgray;
     overflow-y: auto;
 }
 
