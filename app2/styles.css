@@ -45,14 +45,14 @@ main {
     background-color: lightgray;
 }
 
-.room {
+.chat {
     height: 100%;
     width: 100%;
     display: flex;
     flex-direction: column;
 }
 
-.chat {
+.rooms {
     flex: 1;
     background-color: darkgray;
     overflow-y: auto;
