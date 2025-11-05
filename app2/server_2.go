@@ -1,8 +1,18 @@
 package main
 
 import (
+	"log"
+	"net/http"
+
 	"github.com/gorilla/websocket"
 )
+
+// ws upgrader
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
 
 func makeHub() *Hub {
 	return &Hub{
@@ -14,8 +24,9 @@ func makeHub() *Hub {
 
 func newRoom(name string, hub *Hub) *Room {
 	return &Room{
-		name:       name,
-		clients:    make(map[string]*Client),
+		name: name,
+		// clients:    make(map[string]*Client),
+		clients:    make(map[*Client]bool),
 		hub:        hub,
 		broadcast:  make(chan []byte),
 		register:   make(chan *Client),
@@ -38,13 +49,18 @@ func (r *Room) run() {
 	for {
 		select {
 		case message := <-r.broadcast:
-			for _, client := range r.clients {
+			// for _, client := range r.clients {
+			// 	client.send <- message
+			// }
+			for client := range r.clients {
 				client.send <- message
 			}
 		case client := <-r.register:
-			delete(r.clients, client.username)
+			// r.clients[client.username] = client
+			r.clients[client] = true
 		case client := <-r.unregister:
-			r.clients[client.username] = client
+			// delete(r.clients, client.username)
+			delete(r.clients, client)
 		}
 	}
 }
@@ -63,14 +79,50 @@ func (c *Client) write() {
 	}
 }
 
-// func main() {
-// 	fs := http.FileServer(http.Dir("./static"))
-// 	http.Handle("/", fs)
-// 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
-// 		handleWS(hub, w, r)
-// 	})
-// }
+func main() {
+	var hub = makeHub()
+	go hub.run()
 
-// func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
+	fs := http.FileServer(http.Dir("./static"))
+	http.Handle("/", fs)
+	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
+		handleWS(hub, w, r)
+	})
+}
 
-// }
+func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
+	// upgrade connection to WS
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("Upgrade failed:", err)
+		return
+	}
+
+	roomName := r.URL.Query().Get("room")
+	if roomName == "" {
+		roomName = "general" // default room
+	}
+
+	// get or create room
+	room, exists := hub.rooms[roomName]
+	if !exists {
+		room = newRoom(roomName, hub)
+		room.hub.register <- room
+		go room.run()
+	}
+
+	client := &Client{
+		conn: conn,
+		room: room,
+		send: make(chan []byte),
+	}
+
+	client.room.register <- client
+	go client.write()
+	go client.read()
+
+}
+
+// var x *type => declares a pointer, x is a memory address which points to another value in memory
+// *x => dereferences the pointer, gets the value stored at the memory address x
+// &value => gets the memory address for where value is stored
