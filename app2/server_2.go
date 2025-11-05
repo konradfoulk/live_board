@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -88,6 +89,9 @@ func main() {
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		handleWS(hub, w, r)
 	})
+
+	fmt.Println("Chat server starting on :8080")
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
