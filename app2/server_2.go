@@ -101,6 +101,7 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		log.Println("Upgrade failed:", err)
 		return
 	}
+	fmt.Println("New client connected")
 
 	roomName := r.URL.Query().Get("room")
 	if roomName == "" {
