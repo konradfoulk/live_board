@@ -107,6 +107,7 @@ func main() {
 	})
 
 	fmt.Println("Chat server starting on :8080")
+	fmt.Println("Serving files from ./static")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 

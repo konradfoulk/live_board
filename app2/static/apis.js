@@ -30,8 +30,10 @@ document.querySelector("#joinBtn").addEventListener("click", () => {
     }
 
     // hide modal
-    document.querySelector("usernameModal").style.display = "none";
+    document.querySelector("#usernameModal").style.display = "none";
 
     // connect to WebSocket
     connectToChat(username, roomName)
+
+    // could have add event listeners function here so that you can't edit anything until authenticated
 })
