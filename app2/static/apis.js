@@ -1,18 +1,37 @@
-// connect to websocket
+let username = ""
 let roomName = "general"
-const ws = new WebSocket(`ws://localhost:8080/ws?room=${roomName}`)
 
-ws.onopen = () => {
-    console.log(`client connected to ${roomName}`)
-    document.getElementById(`${roomName}`).innerHTML += `<p>Connected to ${roomName}</p>`
+
+function connectToChat(username, roomName) {
+    const ws = new WebSocket(`ws://localhost:8080/ws?room=${roomName}&username=${username}`)
+
+    ws.onopen = () => {
+        console.log(`${username} connected to ${roomName}`)
+        document.getElementById(`${roomName}`).innerHTML += `<p>${username} connected to ${roomName}</p>`
+    }
+
+    ws.onmessage = e => {
+        document.getElementById(`${roomName}`).innerHTML += `<p>${e.data}</p>`
+    }
+
+    document.querySelector(".sendBtn").addEventListener("click", () => {
+        const input = document.querySelector(".messageInput");
+        ws.send(input.value);
+        input.value = "";
+    })
 }
 
-ws.onmessage = e => {
-    document.getElementById(`${roomName}`).innerHTML += `<p>${e.data}</p>`
-}
+document.querySelector("#joinBtn").addEventListener("click", () => {
+    username = document.querySelector("#usernameInput").value
 
-document.querySelector(".sendBtn").addEventListener("click", () => {
-    const input = document.querySelector(".messageInput");
-    ws.send(input.value);
-    input.value = "";
+    if (username === "") {
+        alert("Please enter a username")
+        return;
+    }
+
+    // hide modal
+    document.querySelector("usernameModal").style.display = "none";
+
+    // connect to WebSocket
+    connectToChat(username, roomName)
 })

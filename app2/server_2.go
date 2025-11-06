@@ -25,9 +25,8 @@ func makeHub() *Hub {
 
 func newRoom(name string, hub *Hub) *Room {
 	return &Room{
-		name: name,
-		// clients:    make(map[string]*Client),
-		clients:    make(map[*Client]bool),
+		name:       name,
+		clients:    make(map[string]*Client),
 		hub:        hub,
 		broadcast:  make(chan []byte),
 		register:   make(chan *Client),
@@ -50,34 +49,51 @@ func (r *Room) run() {
 	for {
 		select {
 		case message := <-r.broadcast:
-			// for _, client := range r.clients {
-			// 	client.send <- message
-			// }
-			for client := range r.clients {
-				client.send <- message
+			for _, client := range r.clients {
+				select {
+				case client.send <- message:
+					// message sent successfully
+				default:
+					// client not responding, thus is disconnected by default
+					// could use a timeout, a buffer, or skip messages to not handle this so harshly
+					delete(r.clients, client.username)
+				}
 			}
 		case client := <-r.register:
-			// r.clients[client.username] = client
-			r.clients[client] = true
+			r.clients[client.username] = client
+			log.Printf("Client %s connected to %s", client.username, r.name)
 		case client := <-r.unregister:
-			// delete(r.clients, client.username)
-			delete(r.clients, client)
+			delete(r.clients, client.username)
+			log.Printf("Client %s disconnectd from %s", client.username, r.name)
 		}
 	}
 }
 
 func (c *Client) read() {
-	for {
-		_, message, _ := c.conn.ReadMessage()
+	defer func() {
+		c.room.unregister <- c
+		c.conn.Close()
+	}()
 
-		c.room.broadcast <- message
+	for {
+		_, message, err := c.conn.ReadMessage()
+		if err != nil {
+			break
+		}
+
+		formattedMsg := c.username + ": " + string(message)
+		c.room.broadcast <- []byte(formattedMsg)
 	}
 }
 
 func (c *Client) write() {
+	defer c.conn.Close()
+
 	for message := range c.send {
 		c.conn.WriteMessage(websocket.TextMessage, message)
 	}
+	// when channel closes, send close message
+	c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 }
 
 func main() {
@@ -101,12 +117,13 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		log.Println("Upgrade failed:", err)
 		return
 	}
-	fmt.Println("New client connected")
 
+	// get name values
 	roomName := r.URL.Query().Get("room")
 	if roomName == "" {
 		roomName = "general" // default room
 	}
+	username := r.URL.Query().Get("username")
 
 	// get or create room
 	room, exists := hub.rooms[roomName]
@@ -117,9 +134,10 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	}
 
 	client := &Client{
-		conn: conn,
-		room: room,
-		send: make(chan []byte),
+		username: username,
+		conn:     conn,
+		room:     room,
+		send:     make(chan []byte),
 	}
 
 	client.room.register <- client
