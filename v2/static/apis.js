@@ -14,6 +14,9 @@ function connectToChat(username, roomName) {
         document.getElementById(`${roomName}`).innerHTML += `<p>${e.data}</p>`
     }
 
+    // need a websocket function to update the ui when a message comes saying the state has changed
+    // could be a websocket message for the browser instructing it to do a http get
+
     document.querySelector(".sendBtn").addEventListener("click", () => {
         const input = document.querySelector(".messageInput");
         ws.send(input.value);

@@ -1,3 +1,11 @@
+// add event listener for general
+document.querySelector("#btn_general").addEventListener("click", () => {
+    document.querySelector(".active").classList.remove("active")
+    document.querySelector("#general").classList.add("active")
+
+    // then join room on back-end
+})
+
 const newRoomBtn = document.getElementById('newRoom');
 const roomList = document.getElementById('roomList');
 
@@ -26,7 +34,8 @@ function newRoom() {
             newBtn.remove();
             return;
         }
-
+        newBtn.id = `btn_${roomName}`
+        
         createRoom(roomName);
 
         // add click event listener to switch the room divs
