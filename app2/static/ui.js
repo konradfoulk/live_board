@@ -28,6 +28,14 @@ function newRoom() {
         }
 
         createRoom(roomName);
+
+        // add click event listener to switch the room divs
+        newBtn.addEventListener("click", () => {
+            document.querySelector(".active").classList.remove("active")
+            document.querySelector(`#${roomName}`).classList.add("active")
+
+            // then join room on back-end
+        })
     }
 
     // handle when user finishes editing (press Enter or blur)
@@ -53,5 +61,8 @@ async function createRoom(roomName) {
     console.log(roomName);
 
     // create room on frontend
-    
+    const newRoom = document.createElement("div")
+    newRoom.id = roomName
+    newRoom.classList.add("room")
+    document.querySelector(".rooms").appendChild(newRoom)
 }
