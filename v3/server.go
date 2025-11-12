@@ -106,6 +106,7 @@ func deleteRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	roomName := strings.TrimPrefix(r.URL.Path, "/api/rooms/")
 
+	// might be unnecessary
 	hub.roomsMutex.RLock()
 	room, exists := hub.rooms[roomName]
 	hub.roomsMutex.RUnlock()

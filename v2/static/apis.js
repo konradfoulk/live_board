@@ -11,12 +11,15 @@ function connectToChat(username, roomName) {
     }
 
     ws.onmessage = e => {
+        // distinguish between message types here using new message struct
+
         document.getElementById(`${roomName}`).innerHTML += `<p>${e.data}</p>`
     }
 
     // need a websocket function to update the ui when a message comes saying the state has changed
     // could be a websocket message for the browser instructing it to do an http get
 
+    // change this to set active class on buttons and things in dom that could be interacted with
     document.querySelector(".sendBtn").addEventListener("click", () => {
         const input = document.querySelector(".messageInput");
         ws.send(input.value);
