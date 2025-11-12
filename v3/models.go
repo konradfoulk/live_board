@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -27,6 +28,7 @@ type Room struct {
 type Hub struct {
 	clients          map[string]*Client
 	rooms            map[string]*Room
+	roomsMutex       sync.RWMutex
 	broadcast        chan []byte
 	registerClient   chan *Client
 	unregisterClient chan *Client
@@ -119,13 +121,18 @@ func (h *Hub) run() {
 		case client := <-h.registerClient:
 			h.clients[client.username] = client
 		case client := <-h.unregisterClient:
-			if _, ok := h.clients[client.username]; ok {
-				delete(h.clients, client.username)
-			}
+			delete(h.clients, client.username)
 		case room := <-h.registerRoom:
+			h.roomsMutex.Lock()
 			h.rooms[room.name] = room
+			h.roomsMutex.Unlock()
 		case room := <-h.unregisterRoom:
+			// send clients in room to general (unregister from room)
+			h.roomsMutex.Lock()
 			delete(h.rooms, room.name)
+			h.roomsMutex.Unlock()
+			// broadcast state change to clients? (just need to send them updated list of roomnames so they can create or delete buttons with appropriate functions)
+			// close room channels? (stop room go routine)
 		}
 	}
 }
@@ -153,9 +160,10 @@ func newRoom(name string, hub *Hub) *Room {
 	}
 }
 
-func newClient(username string, room *Room) *Client {
+func newClient(username string, conn *websocket.Conn, room *Room) *Client {
 	return &Client{
 		username: username,
+		conn:     conn,
 		room:     room,
 		hub:      room.hub,
 		send:     make(chan []byte, 256),
