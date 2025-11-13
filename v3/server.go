@@ -18,10 +18,11 @@ var upgrader = websocket.Upgrader{
 
 // WS message format
 type WSMessage struct {
-	Type     string   `json:"type"`
+	Type     string   `json:"type"` // chat, get rooms, create room, delete room
 	Username string   `json:"username,omitempty"`
 	Content  string   `json:"content,omitempty"`
 	Rooms    []string `json:"rooms,omitempty"`
+	Room     string   `json:"room,omitempty"`
 }
 
 func main() {
