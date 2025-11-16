@@ -7,7 +7,6 @@ function clickOff(e) {
     if (!newRoomModal.contains(e.target))
         newRoomModal.style.display = "none"
         document.removeEventListener("click", clickOff)
-        
 }
 
 // get username and start app
@@ -22,7 +21,6 @@ joinModal.addEventListener("submit", e => {
 
     // enable app and remove modal
     document.querySelectorAll("[disabled]").forEach(element => {
-        element.classList.add("active")
         element.disabled = false
     })
     joinModal.style.display = "none"
