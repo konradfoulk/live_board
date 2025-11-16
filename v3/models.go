@@ -60,6 +60,8 @@ func (c *Client) read() {
 
 		jsonMsg, _ := json.Marshal(msg)
 		c.room.broadcast <- jsonMsg
+
+		// broadcast to hub that a message is being sent to a room
 	}
 }
 

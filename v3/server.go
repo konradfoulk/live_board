@@ -18,11 +18,12 @@ var upgrader = websocket.Upgrader{
 
 // WS message format
 type WSMessage struct {
-	Type     string   `json:"type"` // chat, get rooms, create room, delete room
-	Username string   `json:"username,omitempty"`
-	Content  string   `json:"content,omitempty"`
-	Rooms    []string `json:"rooms,omitempty"`
-	Room     string   `json:"room,omitempty"`
+	Type     string      `json:"type"` // chat, get rooms, get chats, join/leave room, new message (notifaction, impliment as a counter or ignore if user is in that room on front end)
+	Username string      `json:"username,omitempty"`
+	Content  string      `json:"content,omitempty"`
+	Rooms    []string    `json:"rooms,omitempty"`
+	Messages []WSMessage `json:"messages,omitempty"`
+	Room     string      `json:"room,omitempty"`
 }
 
 func main() {
@@ -39,11 +40,11 @@ func main() {
 	http.Handle("/", fs)
 
 	// API endpoints
-	// get rooms (on app load) and create a new room
+	// create a new room
 	http.HandleFunc("/api/rooms", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "GET":
-			getRooms(hub, w, r)
+			getRooms(hub, w, r) // get rid of get rooms, moving operation to websockets
 		case "POST":
 			createRoom(hub, w, r)
 		}
@@ -64,6 +65,7 @@ func main() {
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
+// get rid of this, send intial state as first request via websocket
 func getRooms(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -96,6 +98,8 @@ func createRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	room := newRoom(roomName, hub)
 	hub.registerRoom <- room
 	go room.run()
+
+	// broadcast state change to clients
 
 	// send success response
 	w.WriteHeader(http.StatusCreated)
@@ -134,7 +138,10 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// send initial room state through ws
+
 	// create new client and add them to app
+	// add them to the first room in the app, if there is no room, perhaps don't add them to a room?
 	username := r.URL.Query().Get("username")
 	hub.roomsMutex.RLock()
 	room := hub.rooms["general"]

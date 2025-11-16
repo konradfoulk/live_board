@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
     <link rel="stylesheet" href="styles.css">
+    <script src="ui.js" defer></script>
     <script src="scripts.js" defer></script>
 </head>
 <body>
@@ -13,23 +14,28 @@
         <input type="text" name="username">
         <button type="submit">Join</button>
     </form>
+    <form id="newRoomModal" style="display: none;">
+        <label for="roomName">Room Name:</label>
+        <input type="text" name="roomName">
+        <button type="submit">Create Room</button>
+    </form>
     <div id="rooms">
         <div id="roomBtns">
             <div class="roomBtnContainer" data-room="general">
-                <button class="roomBtn" data-room="general">general</button>
-                <button class="deleteBtn" data-room="general">delete</button>
+                <button class="roomBtn" data-room="general" disabled>general</button>
+                <button class="deleteBtn" data-room="general" disabled>delete</button>
             </div>
         </div>
-        <button id="newRoom">New Room</button>
+        <button id="newRoom" disabled>New Room</button>
     </div>
     <div id="chat">
         <div id="roomChats">
-            <div class="roomChat active" data-room="general">
+            <div class="roomChat" data-room="general">
             </div>
         </div>
         <form id="messageInput">
-            <input type="text" name="message">
-            <button type="submit">Send</button>
+            <input type="text" name="message" disabled>
+            <button type="submit" disabled>Send</button>
         </form>
     </div>
 </body>
