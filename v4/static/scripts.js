@@ -15,6 +15,19 @@ function newRoomBtn() {
 // establishes websocket connection
 // builds websocket event listeners
 function connectToChat(username) {
+    const ws = new WebSocket(`ws://localhost:8080/ws?username=${username}`) // user automatically added to general  or first room on join
+    // check this ^, adding them to general may not be necessary (could just map button, button may not even be necessary: could start standard create room procedure with the first user on the backend when they join in handlews)
+
+    ws.onmessage = e => {
+        const msg = JSON.parse(e.data)
+
+        switch (msg.type) {
+            case "create_room":
+
+        }
+    }
+
+
     // build websocket events
     // receive a chat message (for what room?)
     // receive a create room update

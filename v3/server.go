@@ -142,6 +142,7 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	// create new client and add them to app
 	// add them to the first room in the app, if there is no room, perhaps don't add them to a room?
+	// if no rooms exist, need to create general room first (other wise get first room in map) (also this will trigger create room processes, therefore not needing initial buttons on frontend)
 	username := r.URL.Query().Get("username")
 	hub.roomsMutex.RLock()
 	room := hub.rooms["general"]
