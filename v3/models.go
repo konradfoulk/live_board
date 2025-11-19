@@ -36,7 +36,7 @@ type Hub struct {
 	unregisterRoom   chan *Room
 }
 
-// read input message from browser and broadcast to room
+// read input message from browser and pass to broadcast
 func (c *Client) read() {
 	// remove client from room and hub when client disconnects
 	// close WS connection
