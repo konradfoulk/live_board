@@ -31,13 +31,13 @@ function connectToChat(username) {
         const msg = JSON.parse(e.data)
 
         switch (msg.type) {
-            case "create_room":
-                console.log(msg.room)
-                break
             case "init_rooms":
                 console.log(msg.rooms)
                 break
                 // build room buttons and click the first one (if there is one) [joining the "default" room on load]
+            case "create_room":
+                console.log(msg.room)
+                break
         }
     }
 
