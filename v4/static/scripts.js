@@ -17,24 +17,27 @@ async function createRoom(roomName) {
     } else {
         console.log(`could not create room ${data.name}: ${response.status}`)
     }
-
-    // send to backend
-    // backend will broadcast update, that is when button will be built with event listener function to handle other logic
 }
 
 // establishes websocket connection
-// builds websocket event listeners
 function connectToChat(username) {
-    const ws = new WebSocket(`ws://localhost:8080/ws?username=${username}`) // user automatically added to general  or first room on join
-    // check this ^, adding them to general may not be necessary (could just map button, button may not even be necessary: could start standard create room procedure with the first user on the backend when they join in handlews)
+    const ws = new WebSocket(`ws://localhost:8080/ws?username=${username}`)
+
+    ws.onopen = () => {
+        console.log(`${username} connected to server`)
+    }
 
     ws.onmessage = e => {
         const msg = JSON.parse(e.data)
 
         switch (msg.type) {
             case "create_room":
-
+                console.log(msg.room)
+                break
             case "init_rooms":
+                console.log(msg.rooms)
+                break
+                // build room buttons and click the first one (if there is one) [joining the "default" room on load]
         }
     }
 

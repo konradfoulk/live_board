@@ -16,8 +16,9 @@ var upgrader = websocket.Upgrader{
 }
 
 type WSMessage struct {
-	Type string `json:"type"`
-	Room string `json:"room,omitempty"`
+	Type  string   `json:"type"`
+	Room  string   `json:"room,omitempty"`
+	Rooms []string `json:"rooms,omitempty"`
 }
 
 func main() {
@@ -60,6 +61,14 @@ func createRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	room := newRoom(roomName)
 	hub.registerRoom <- room
 
+	// push update to frontend clients
+	msg := WSMessage{
+		Type: "create_room",
+		Room: room.name,
+	}
+	jsonMsg, _ := json.Marshal(msg)
+	hub.broadcast <- jsonMsg
+
 	// send success response
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"name": roomName})
@@ -81,5 +90,18 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	hub.registerClient <- client
 	go client.write()
 
-	// pass initial state to client.send
+	roomsMap := <-hub.initRooms
+	rooms := []string{}
+	for room := range roomsMap {
+		rooms = append(rooms, room)
+	}
+
+	log.Println(rooms)
+	// send initial state to frontend
+	msg := WSMessage{
+		Type:  "init_rooms",
+		Rooms: rooms,
+	}
+	jsonMsg, _ := json.Marshal(msg)
+	client.send <- jsonMsg
 }

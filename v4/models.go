@@ -1,8 +1,8 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
+	"sync"
 
 	"github.com/gorilla/websocket"
 )
@@ -19,12 +19,15 @@ type Room struct {
 
 type Hub struct {
 	clients          map[string]*Client
+	clientsMutex     sync.RWMutex
 	rooms            map[string]*Room
+	roomsMutex       sync.RWMutex
 	broadcast        chan []byte
 	registerClient   chan *Client
 	unregisterClient chan *Client
 	registerRoom     chan *Room
 	unregisterRoom   chan *Room
+	initRooms        chan map[string]*Room
 }
 
 func (c *Client) write() {
@@ -42,24 +45,27 @@ func (h *Hub) run() {
 				case client.send <- message:
 					// message sent successfully
 				default:
-					// client not resopnding, close channel to allow loop to move on
+					log.Printf("%s not responding", client.username)
 					close(client.send)
 				}
 			}
 		case client := <-h.registerClient:
+			h.roomsMutex.RLock()
+
+			h.clientsMutex.Lock()
 			h.clients[client.username] = client
+			h.clientsMutex.Unlock()
+
+			h.initRooms <- h.rooms
+			h.roomsMutex.RUnlock()
 
 			log.Printf("%s connected to hub", client.username)
 		case room := <-h.registerRoom:
+			h.roomsMutex.Lock()
 			h.rooms[room.name] = room
+			h.roomsMutex.Unlock()
 
-			// push update to frontend
-			msg := WSMessage{
-				Type: "create_room",
-				Room: room.name,
-			}
-			jsonMsg, _ := json.Marshal(msg)
-			h.broadcast <- jsonMsg
+			log.Printf("created room %s", room.name)
 		}
 	}
 }
@@ -87,5 +93,6 @@ func makeHub() *Hub {
 		unregisterRoom:   make(chan *Room),
 		registerClient:   make(chan *Client),
 		unregisterClient: make(chan *Client),
+		initRooms:        make(chan map[string]*Room),
 	}
 }
