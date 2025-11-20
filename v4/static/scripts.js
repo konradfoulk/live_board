@@ -32,11 +32,13 @@ function connectToChat(username) {
 
         switch (msg.type) {
             case "init_rooms":
-                console.log(msg.rooms)
+                if (msg.rooms) {
+                    msg.rooms.forEach(newRoomBtn)
+                }
                 break
                 // build room buttons and click the first one (if there is one) [joining the "default" room on load]
             case "create_room":
-                console.log(msg.room)
+                newRoomBtn(msg.room)
                 break
         }
     }
@@ -50,7 +52,11 @@ function connectToChat(username) {
     // receive initial chat state
 }
 
-function newRoomBtn() {
+function newRoomBtn(roomName) {
+    console.log(roomName)
+
+    
+
     // create the element
 
     // add an event listener for when it is clicked

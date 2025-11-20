@@ -18,6 +18,7 @@ function addEventListeners() {
 
         newRoomModal.style.display = ""
         document.addEventListener("click", clickOff) // form deactivates if clicked off
+        newRoomModal.elements.roomName.focus()
     })
 
     // get room name and create room
@@ -46,3 +47,5 @@ joinModal.addEventListener("submit", e => {
 
     joinModal.style.display = "none"
 })
+
+joinModal.elements.username.focus()
