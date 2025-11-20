@@ -90,14 +90,8 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	hub.registerClient <- client
 	go client.write()
 
-	roomsMap := <-hub.initRooms
-	rooms := []string{}
-	for room := range roomsMap {
-		rooms = append(rooms, room)
-	}
-
-	log.Println(rooms)
 	// send initial state to frontend
+	rooms := <-hub.initRooms
 	msg := WSMessage{
 		Type:  "init_rooms",
 		Rooms: rooms,

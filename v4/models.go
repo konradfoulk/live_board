@@ -21,13 +21,14 @@ type Hub struct {
 	clients          map[string]*Client
 	clientsMutex     sync.RWMutex
 	rooms            map[string]*Room
+	roomsList        []string // for order and state
 	roomsMutex       sync.RWMutex
 	broadcast        chan []byte
 	registerClient   chan *Client
 	unregisterClient chan *Client
 	registerRoom     chan *Room
 	unregisterRoom   chan *Room
-	initRooms        chan map[string]*Room
+	initRooms        chan []string
 }
 
 func (c *Client) write() {
@@ -56,13 +57,14 @@ func (h *Hub) run() {
 			h.clients[client.username] = client
 			h.clientsMutex.Unlock()
 
-			h.initRooms <- h.rooms
+			h.initRooms <- h.roomsList
 			h.roomsMutex.RUnlock()
 
 			log.Printf("%s connected to hub", client.username)
 		case room := <-h.registerRoom:
 			h.roomsMutex.Lock()
 			h.rooms[room.name] = room
+			h.roomsList = append(h.roomsList, room.name)
 			h.roomsMutex.Unlock()
 
 			log.Printf("created room %s", room.name)
@@ -88,11 +90,12 @@ func makeHub() *Hub {
 	return &Hub{
 		clients:          make(map[string]*Client),
 		rooms:            make(map[string]*Room),
+		roomsList:        []string{},
 		broadcast:        make(chan []byte),
 		registerRoom:     make(chan *Room),
 		unregisterRoom:   make(chan *Room),
 		registerClient:   make(chan *Client),
 		unregisterClient: make(chan *Client),
-		initRooms:        make(chan map[string]*Room),
+		initRooms:        make(chan []string),
 	}
 }
