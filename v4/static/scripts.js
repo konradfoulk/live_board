@@ -19,6 +19,37 @@ async function createRoom(roomName) {
     }
 }
 
+function newRoomBtn(roomName) {
+    const roomBtnContainer = document.createElement("div")
+    const roomBtn = document.createElement("button")
+    const deleteBtn = document.createElement("button")
+
+    roomBtnContainer.className = "roomBtnContainer"
+    roomBtn.className = "roomBtn"
+    deleteBtn.className = "deleteBtn"
+
+    roomBtn.textContent = roomName
+    deleteBtn.textContent = "delete"
+    
+    const elements = [roomBtnContainer, roomBtn, deleteBtn]
+    elements.forEach(element => {
+        element.setAttribute("data-room", roomName)
+    })
+
+    roomBtnContainer.appendChild(roomBtn)
+    roomBtnContainer.appendChild(deleteBtn)
+
+    return roomBtnContainer
+
+    // create the element
+
+    // add an event listener for when it is clicked
+    // create a new chat element with the proper room attribute (give a place for incoming websocket message to go)
+    // tell the ws endpoint to change rooms (get initial state from response and populate it in the new div)
+    // delete old room div and make new room div visible (done immediately after resopnse is sent so while waiting to load, users waits at an empty screen and if they try to type, they will be in the new room so no weird races)
+}
+
+
 // establishes websocket connection
 function connectToChat(username) {
     const ws = new WebSocket(`ws://localhost:8080/ws?username=${username}`)
@@ -33,12 +64,16 @@ function connectToChat(username) {
         switch (msg.type) {
             case "init_rooms":
                 if (msg.rooms) {
-                    msg.rooms.forEach(newRoomBtn)
+                    msg.rooms.forEach(room => {
+                        const newRoom = newRoomBtn(room)
+                        document.querySelector("#roomBtns").appendChild(newRoom)
+                    })
                 }
                 break
                 // build room buttons and click the first one (if there is one) [joining the "default" room on load]
             case "create_room":
-                newRoomBtn(msg.room)
+                const newRoom = newRoomBtn(msg.room)
+                document.querySelector("#roomBtns").appendChild(newRoom)
                 break
         }
     }
@@ -50,17 +85,4 @@ function connectToChat(username) {
     // receive a delete room update
     // receive intial room state (and what room it's going to)
     // receive initial chat state
-}
-
-function newRoomBtn(roomName) {
-    console.log(roomName)
-
-    
-
-    // create the element
-
-    // add an event listener for when it is clicked
-    // create a new chat element with the proper room attribute (give a place for incoming websocket message to go)
-    // tell the ws endpoint to change rooms (get initial state from response and populate it in the new div)
-    // delete old room div and make new room div visible (done immediately after resopnse is sent so while waiting to load, users waits at an empty screen and if they try to type, they will be in the new room so no weird races)
 }

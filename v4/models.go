@@ -29,6 +29,7 @@ type Hub struct {
 	registerRoom     chan *Room
 	unregisterRoom   chan *Room
 	initRooms        chan []string
+	createRoom       chan string
 }
 
 func (c *Client) write() {
@@ -41,6 +42,7 @@ func (h *Hub) run() {
 	for {
 		select {
 		case message := <-h.broadcast:
+			h.clientsMutex.RLock()
 			for _, client := range h.clients {
 				select {
 				case client.send <- message:
@@ -50,6 +52,7 @@ func (h *Hub) run() {
 					close(client.send)
 				}
 			}
+			h.clientsMutex.RUnlock()
 		case client := <-h.registerClient:
 			h.roomsMutex.RLock()
 
@@ -65,6 +68,8 @@ func (h *Hub) run() {
 			h.roomsMutex.Lock()
 			h.rooms[room.name] = room
 			h.roomsList = append(h.roomsList, room.name)
+
+			h.createRoom <- room.name
 			h.roomsMutex.Unlock()
 
 			log.Printf("created room %s", room.name)
@@ -97,5 +102,6 @@ func makeHub() *Hub {
 		registerClient:   make(chan *Client),
 		unregisterClient: make(chan *Client),
 		initRooms:        make(chan []string),
+		createRoom:       make(chan string),
 	}
 }

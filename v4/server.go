@@ -61,10 +61,12 @@ func createRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	room := newRoom(roomName)
 	hub.registerRoom <- room
 
+	roomCreated := <-hub.createRoom // make sure client doesn't get room that doesn't exist yet
+
 	// push update to frontend clients
 	msg := WSMessage{
 		Type: "create_room",
-		Room: room.name,
+		Room: roomCreated,
 	}
 	jsonMsg, _ := json.Marshal(msg)
 	hub.broadcast <- jsonMsg
