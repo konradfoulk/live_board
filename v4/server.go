@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/websocket"
 )
@@ -38,6 +39,11 @@ func main() {
 	// create room
 	http.HandleFunc("/api/rooms", func(w http.ResponseWriter, r *http.Request) {
 		createRoom(hub, w, r)
+	})
+
+	// delete room
+	http.HandleFunc("/api/rooms/", func(w http.ResponseWriter, r *http.Request) {
+		deleteRoom(hub, w, r)
 	})
 
 	// WS endpoint
@@ -78,6 +84,15 @@ func createRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	// send success response
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]string{"name": roomName})
+}
+
+func deleteRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
+	log.Println("delete hit")
+
+	roomName := strings.TrimPrefix(r.URL.Path, "/api/rooms/")
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"name": roomName}) // how to get roomName from url (api endpoint)
 }
 
 func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {

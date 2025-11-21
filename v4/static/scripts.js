@@ -10,13 +10,27 @@ async function createRoom(roomName) {
         },
         body: JSON.stringify({ name: roomName })
     })
-    const data = await response.json();
+    const data = await response.json()
 
     if (response.ok) {
         console.log(`created room ${data.name}: ${response.status}`)
     } else {
         console.log(`could not create room ${data.name}: ${response.status}`)
     }
+}
+
+async function deleteRoom(event) {
+    const roomName = event.target.dataset.room
+
+    // call server API
+    const response = await fetch(`/api/rooms/${roomName}`, { method: "POST" })
+    const data = await response.json()
+
+    if (response.ok) {
+        console.log(`deleted room ${data.name}: ${response.status}`)
+    } else {
+        console.log(`could not delete room ${data.name}: ${response.status}`)
+    }    
 }
 
 function newRoomBtn(roomName) {
@@ -38,6 +52,8 @@ function newRoomBtn(roomName) {
 
     roomBtnContainer.appendChild(roomBtn)
     roomBtnContainer.appendChild(deleteBtn)
+
+    deleteBtn.addEventListener("click", deleteRoom)
 
     return roomBtnContainer
 
