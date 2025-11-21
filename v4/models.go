@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"slices"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -73,6 +74,15 @@ func (h *Hub) run() {
 			h.roomsMutex.Unlock()
 
 			log.Printf("created room %s", room.name)
+		case room := <-h.unregisterRoom:
+			h.roomsMutex.Lock()
+			delete(h.rooms, room.name)
+			h.roomsList = slices.DeleteFunc(h.roomsList, func(name string) bool {
+				return name == room.name
+			})
+			h.roomsMutex.Unlock()
+
+			log.Printf("deleted room %s", room.name)
 		}
 	}
 }

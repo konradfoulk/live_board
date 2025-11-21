@@ -87,9 +87,15 @@ func createRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
-	log.Println("delete hit")
-
 	roomName := strings.TrimPrefix(r.URL.Path, "/api/rooms/")
+
+	hub.roomsMutex.RLock()
+	room := hub.rooms[roomName]
+	hub.roomsMutex.RUnlock()
+
+	hub.unregisterRoom <- room
+
+	// update frontend
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"name": roomName}) // how to get roomName from url (api endpoint)

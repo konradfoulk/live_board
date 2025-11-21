@@ -91,6 +91,9 @@ function connectToChat(username) {
                 const newRoom = newRoomBtn(msg.room)
                 document.querySelector("#roomBtns").appendChild(newRoom)
                 break
+            case "delete_room":
+                console.log(`deleting ${msg.room}`)
+                break
         }
     }
 
