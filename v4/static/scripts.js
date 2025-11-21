@@ -64,9 +64,9 @@ function connectToChat(username) {
         switch (msg.type) {
             case "init_rooms":
                 if (msg.rooms) {
-                    msg.rooms.forEach(room => {
+                    msg.rooms.reverse().forEach(room => {
                         const newRoom = newRoomBtn(room)
-                        document.querySelector("#roomBtns").appendChild(newRoom)
+                        document.querySelector("#roomBtns").prepend(newRoom)
                     })
                 }
                 break

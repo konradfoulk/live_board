@@ -25,6 +25,10 @@ func main() {
 	// make hub
 	hub := makeHub()
 	go hub.run()
+	// make default room
+	defaultRoom := newRoom("general")
+	hub.rooms[defaultRoom.name] = defaultRoom
+	hub.roomsList = append(hub.roomsList, defaultRoom.name)
 
 	// serve app
 	fs := http.FileServer(http.Dir("./static"))
