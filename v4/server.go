@@ -95,8 +95,17 @@ func deleteRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	hub.unregisterRoom <- room
 
-	// update frontend
+	roomDelete := <-hub.deleteRoom
 
+	// push update to frontend clients
+	msg := WSMessage{
+		Type: "delete_room",
+		Room: roomDelete,
+	}
+	jsonMsg, _ := json.Marshal(msg)
+	hub.broadcast <- jsonMsg
+
+	// send success response
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"name": roomName}) // how to get roomName from url (api endpoint)
 }

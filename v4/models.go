@@ -31,6 +31,7 @@ type Hub struct {
 	unregisterRoom   chan *Room
 	initRooms        chan []string
 	createRoom       chan string
+	deleteRoom       chan string
 }
 
 func (c *Client) write() {
@@ -80,6 +81,8 @@ func (h *Hub) run() {
 			h.roomsList = slices.DeleteFunc(h.roomsList, func(name string) bool {
 				return name == room.name
 			})
+
+			h.deleteRoom <- room.name
 			h.roomsMutex.Unlock()
 
 			log.Printf("deleted room %s", room.name)
@@ -113,5 +116,6 @@ func makeHub() *Hub {
 		unregisterClient: make(chan *Client),
 		initRooms:        make(chan []string),
 		createRoom:       make(chan string),
+		deleteRoom:       make(chan string),
 	}
 }

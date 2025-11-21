@@ -92,7 +92,9 @@ function connectToChat(username) {
                 document.querySelector("#roomBtns").appendChild(newRoom)
                 break
             case "delete_room":
-                console.log(`deleting ${msg.room}`)
+                console.log(`delete ${msg.room}`) // delete room button here
+                // think about race condition with room being deleted and users getting cicked while the room is still active on the frontend (just handle lost messages with an error?)
+
                 break
         }
     }
