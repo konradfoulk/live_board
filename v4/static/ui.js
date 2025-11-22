@@ -19,8 +19,8 @@ function newRoomBtn(roomName) {
         element.setAttribute("data-room", roomName)
     })
 
-    roomBtnContainer.appendChild(roomBtn)
-    roomBtnContainer.appendChild(deleteBtn)
+    roomBtnContainer.append(roomBtn)
+    roomBtnContainer.append(deleteBtn)
 
     roomBtn.addEventListener("click", joinRoom)
     deleteBtn.addEventListener("click", deleteRoom)

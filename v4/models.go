@@ -12,6 +12,8 @@ type Client struct {
 	username string
 	conn     *websocket.Conn
 	send     chan []byte
+	room     *Room
+	hub      *Hub
 }
 
 type Room struct {
@@ -49,7 +51,13 @@ func (c *Client) read() {
 
 		switch msg.Type {
 		case "join_room":
-			log.Printf("%s wants to join %s", c.username, msg.Room)
+			if c.room != nil {
+				c.room.unregister <- c
+			}
+
+			room := c.hub.rooms[msg.Room]
+			c.room = room
+			room.register <- c
 		}
 	}
 
@@ -62,9 +70,9 @@ func (r *Room) run() {
 	for {
 		select {
 		case client := <-r.register:
-			log.Printf("client %s joined %s", client.username, r.name)
+			log.Printf("%s joined %s", client.username, r.name)
 		case client := <-r.unregister:
-			log.Printf("client %s left %s", client.username, r.name)
+			log.Printf("%s left %s", client.username, r.name)
 		}
 	}
 }
@@ -117,11 +125,12 @@ func (h *Hub) run() {
 	}
 }
 
-func newClient(username string, conn *websocket.Conn) *Client {
+func newClient(username string, conn *websocket.Conn, hub *Hub) *Client {
 	return &Client{
 		username: username,
 		conn:     conn,
 		send:     make(chan []byte, 256),
+		hub:      hub,
 	}
 }
 

@@ -17,10 +17,11 @@ var upgrader = websocket.Upgrader{
 }
 
 type WSMessage struct {
-	Type     string   `json:"type"`
-	Username string   `json:"username,omitempty"`
-	Room     string   `json:"room,omitempty"`
-	Rooms    []string `json:"rooms,omitempty"`
+	Type        string   `json:"type"`
+	MessageType string   `json:"messageType,omitempty"`
+	Username    string   `json:"username,omitempty"`
+	Room        string   `json:"room,omitempty"`
+	Rooms       []string `json:"rooms,omitempty"`
 }
 
 func main() {
@@ -29,6 +30,7 @@ func main() {
 	go hub.run()
 	// make default room
 	defaultRoom := newRoom("general")
+	go defaultRoom.run()
 	hub.rooms[defaultRoom.name] = defaultRoom
 	hub.roomsList = append(hub.roomsList, defaultRoom.name)
 
@@ -70,6 +72,7 @@ func createRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	// make and start room
 	room := newRoom(roomName)
+	go room.run()
 	hub.registerRoom <- room
 
 	roomCreated := <-hub.createRoom // make sure client doesn't get room that doesn't exist yet
@@ -121,7 +124,7 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	}
 
 	username := r.URL.Query().Get("username")
-	client := newClient(username, conn)
+	client := newClient(username, conn, hub)
 
 	hub.registerClient <- client
 	go client.write()

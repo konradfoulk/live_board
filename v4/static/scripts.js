@@ -36,9 +36,21 @@ async function deleteRoom(event) {
 
 function joinRoom(event) {
     const roomName = event.target.dataset.room
+    if (roomName == currentRoom) {
+        return
+    }
 
     currentRoom = roomName
     console.log(currentRoom)
+
+    // delete old room chat
+    document.querySelector(".roomChat").remove()
+
+    // make new room chat and append it to roomChats
+    const roomChat = document.createElement("div")
+    roomChat.className = "roomChat"
+    roomChat.setAttribute("data-room",roomName)
+    document.querySelector("#roomChats").append(roomChat)
 
     msg = {
         type: "join_room",
@@ -59,29 +71,41 @@ function connectToChat(username) {
         const msg = JSON.parse(e.data)
 
         switch (msg.type) {
+            case "create_room":
+                const newRoom = newRoomBtn(msg.room)
+                document.querySelector("#roomBtns").append(newRoom)
+                break
+            case "delete_room":
+                // may need to change this if chats use query selector
+                if (msg.room === currentRoom) {
+                    currentRoom = ""
+                }
+                document.querySelectorAll(`[data-room="${msg.room}"`).forEach(element => {
+                    element.remove()
+                })
+                break
             case "init_rooms":
                 if (msg.rooms) {
                     msg.rooms.reverse().forEach(room => {
                         const newRoom = newRoomBtn(room)
                         document.querySelector("#roomBtns").prepend(newRoom)
                     })
-                    // current room = msg.rooms[0]
+                    // click #roomBtns first child
                 }
                 break
                 // build room buttons and click the first one (if there is one) [joining the "default" room on load]
-            case "create_room":
-                const newRoom = newRoomBtn(msg.room)
-                document.querySelector("#roomBtns").appendChild(newRoom)
-                break
-            case "delete_room":
-                // may need to change this if chats use query selector
-                document.querySelectorAll(`[data-room="${msg.room}"`).forEach(element => {
-                    element.remove()
-                })
-                break
-            case "chat_message":
-                if (msg.room != currentRoom) {
-                    // don't send message
+            case "message":
+                if (msg.room == currentRoom) {
+                    switch (msg.messageType) {
+                        case "join_message":
+                            break
+                        case "leave_message":
+                            break
+                        case "chat_message":
+                            break
+                        case "init_chat":
+                            break
+                    }
                 }
         }
     }
