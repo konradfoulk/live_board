@@ -2,6 +2,39 @@ const joinModal =  document.querySelector("#joinModal")
 const newRoom = document.querySelector("#newRoom")
 const newRoomModal = document.querySelector("#newRoomModal")
 
+function newRoomBtn(roomName) {
+    const roomBtnContainer = document.createElement("div")
+    const roomBtn = document.createElement("button")
+    const deleteBtn = document.createElement("button")
+
+    roomBtnContainer.className = "roomBtnContainer"
+    roomBtn.className = "roomBtn"
+    deleteBtn.className = "deleteBtn"
+
+    roomBtn.textContent = roomName
+    deleteBtn.textContent = "delete"
+    
+    const elements = [roomBtnContainer, roomBtn, deleteBtn]
+    elements.forEach(element => {
+        element.setAttribute("data-room", roomName)
+    })
+
+    roomBtnContainer.appendChild(roomBtn)
+    roomBtnContainer.appendChild(deleteBtn)
+
+    roomBtn.addEventListener("click", joinRoom)
+    deleteBtn.addEventListener("click", deleteRoom)
+
+    return roomBtnContainer
+
+    // create the element
+
+    // add an event listener for when it is clicked
+    // create a new chat element with the proper room attribute (give a place for incoming websocket message to go)
+    // tell the ws endpoint to change rooms (get initial state from response and populate it in the new div)
+    // delete old room div and make new room div visible (done immediately after resopnse is sent so while waiting to load, users waits at an empty screen and if they try to type, they will be in the new room so no weird races)
+}
+
 // deactivate new room form if clicked off
 function clickOff(e) {
     if (!newRoomModal.contains(e.target))

@@ -15,7 +15,10 @@ type Client struct {
 }
 
 type Room struct {
-	name string
+	name       string
+	clients    map[string]*Client
+	register   chan *Client
+	unregister chan *Client
 }
 
 type Hub struct {
@@ -36,6 +39,23 @@ type Hub struct {
 func (c *Client) write() {
 	for message := range c.send {
 		c.conn.WriteMessage(websocket.TextMessage, message)
+	}
+}
+
+func (c *Client) read() {
+	// receive room join request from front end
+	// unregister from current room (if not room === "")
+	// register for the new room
+}
+
+func (r *Room) run() {
+	for {
+		select {
+		case client := <-r.register:
+			log.Printf("client %s joined %s", client.username, r.name)
+		case client := <-r.unregister:
+			log.Printf("client %s left %s", client.username, r.name)
+		}
 	}
 }
 
@@ -97,7 +117,10 @@ func newClient(username string, conn *websocket.Conn) *Client {
 
 func newRoom(name string) *Room {
 	return &Room{
-		name: name,
+		name:       name,
+		clients:    make(map[string]*Client),
+		register:   make(chan *Client),
+		unregister: make(chan *Client),
 	}
 }
 

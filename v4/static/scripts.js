@@ -1,3 +1,4 @@
+let ws = null
 let currentRoom = ""
 
 async function createRoom(roomName) {
@@ -33,43 +34,16 @@ async function deleteRoom(event) {
     }    
 }
 
-function newRoomBtn(roomName) {
-    const roomBtnContainer = document.createElement("div")
-    const roomBtn = document.createElement("button")
-    const deleteBtn = document.createElement("button")
+function joinRoom(event) {
+    const roomName = event.target.dataset.room
 
-    roomBtnContainer.className = "roomBtnContainer"
-    roomBtn.className = "roomBtn"
-    deleteBtn.className = "deleteBtn"
-
-    roomBtn.textContent = roomName
-    deleteBtn.textContent = "delete"
-    
-    const elements = [roomBtnContainer, roomBtn, deleteBtn]
-    elements.forEach(element => {
-        element.setAttribute("data-room", roomName)
-    })
-
-    roomBtnContainer.appendChild(roomBtn)
-    roomBtnContainer.appendChild(deleteBtn)
-
-    // roomBtn.addEventListener("click", )
-    deleteBtn.addEventListener("click", deleteRoom)
-
-    return roomBtnContainer
-
-    // create the element
-
-    // add an event listener for when it is clicked
-    // create a new chat element with the proper room attribute (give a place for incoming websocket message to go)
-    // tell the ws endpoint to change rooms (get initial state from response and populate it in the new div)
-    // delete old room div and make new room div visible (done immediately after resopnse is sent so while waiting to load, users waits at an empty screen and if they try to type, they will be in the new room so no weird races)
+    console.log(roomName)
+    // ws.send
 }
 
-
-// establishes websocket connection
+// establishes websocket connection and recieving ports
 function connectToChat(username) {
-    const ws = new WebSocket(`ws://localhost:8080/ws?username=${username}`)
+    ws = new WebSocket(`ws://localhost:8080/ws?username=${username}`)
 
     ws.onopen = () => {
         console.log(`${username} connected to server`)
@@ -85,6 +59,7 @@ function connectToChat(username) {
                         const newRoom = newRoomBtn(room)
                         document.querySelector("#roomBtns").prepend(newRoom)
                     })
+                    // current room = msg.rooms[0]
                 }
                 break
                 // build room buttons and click the first one (if there is one) [joining the "default" room on load]
