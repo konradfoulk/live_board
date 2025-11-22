@@ -37,8 +37,14 @@ async function deleteRoom(event) {
 function joinRoom(event) {
     const roomName = event.target.dataset.room
 
-    console.log(roomName)
-    // ws.send
+    currentRoom = roomName
+    console.log(currentRoom)
+
+    msg = {
+        type: "join_room",
+        room: roomName
+    }
+    ws.send(JSON.stringify(msg))
 }
 
 // establishes websocket connection and recieving ports
@@ -73,6 +79,10 @@ function connectToChat(username) {
                     element.remove()
                 })
                 break
+            case "chat_message":
+                if (msg.room != currentRoom) {
+                    // don't send message
+                }
         }
     }
 

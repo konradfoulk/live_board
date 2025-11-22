@@ -43,6 +43,16 @@ func (c *Client) write() {
 }
 
 func (c *Client) read() {
+	for {
+		var msg WSMessage
+		c.conn.ReadJSON(&msg) // break if there is an error (means connection was closed, ie client left)
+
+		switch msg.Type {
+		case "join_room":
+			log.Printf("%s wants to join %s", c.username, msg.Room)
+		}
+	}
+
 	// receive room join request from front end
 	// unregister from current room (if not room === "")
 	// register for the new room

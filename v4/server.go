@@ -17,9 +17,10 @@ var upgrader = websocket.Upgrader{
 }
 
 type WSMessage struct {
-	Type  string   `json:"type"`
-	Room  string   `json:"room,omitempty"`
-	Rooms []string `json:"rooms,omitempty"`
+	Type     string   `json:"type"`
+	Username string   `json:"username,omitempty"`
+	Room     string   `json:"room,omitempty"`
+	Rooms    []string `json:"rooms,omitempty"`
 }
 
 func main() {
@@ -124,6 +125,7 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	hub.registerClient <- client
 	go client.write()
+	go client.read()
 
 	// send initial state to frontend
 	rooms := <-hub.initRooms
