@@ -56,8 +56,11 @@ func (c *Client) read() {
 			}
 
 			room := c.hub.rooms[msg.Room]
-			c.room = room
 			room.register <- c
+		case "message":
+			if c.room != nil {
+
+			}
 		}
 	}
 
@@ -70,8 +73,16 @@ func (r *Room) run() {
 	for {
 		select {
 		case client := <-r.register:
+			client.room = r
+
+			r.clients[client.username] = client
+
 			log.Printf("%s joined %s", client.username, r.name)
 		case client := <-r.unregister:
+			client.room = nil
+
+			delete(r.clients, client.username)
+
 			log.Printf("%s left %s", client.username, r.name)
 		}
 	}
@@ -114,6 +125,7 @@ func (h *Hub) run() {
 			log.Printf("created room %s", room.name)
 		case room := <-h.unregisterRoom:
 			h.roomsMutex.Lock()
+
 			delete(h.rooms, room.name)
 			h.roomsList = slices.DeleteFunc(h.roomsList, func(name string) bool {
 				return name == room.name

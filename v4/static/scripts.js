@@ -76,7 +76,6 @@ function connectToChat(username) {
                 document.querySelector("#roomBtns").append(newRoom)
                 break
             case "delete_room":
-                // may need to change this if chats use query selector
                 if (msg.room === currentRoom) {
                     currentRoom = ""
                 }
