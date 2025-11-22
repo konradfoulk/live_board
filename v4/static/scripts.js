@@ -53,6 +53,7 @@ function newRoomBtn(roomName) {
     roomBtnContainer.appendChild(roomBtn)
     roomBtnContainer.appendChild(deleteBtn)
 
+    // roomBtn.addEventListener("click", )
     deleteBtn.addEventListener("click", deleteRoom)
 
     return roomBtnContainer
@@ -92,9 +93,10 @@ function connectToChat(username) {
                 document.querySelector("#roomBtns").appendChild(newRoom)
                 break
             case "delete_room":
-                console.log(`delete ${msg.room}`) // delete room button here
-                // think about race condition with room being deleted and users getting cicked while the room is still active on the frontend (just handle lost messages with an error?)
-
+                // may need to change this if chats use query selector
+                document.querySelectorAll(`[data-room="${msg.room}"`).forEach(element => {
+                    element.remove()
+                })
                 break
         }
     }
@@ -102,8 +104,8 @@ function connectToChat(username) {
 
     // build websocket events
     // receive a chat message (for what room?)
-    // receive a create room update
-    // receive a delete room update
-    // receive intial room state (and what room it's going to)
+    // receive a create room update - done
+    // receive a delete room update - done
+    // receive intial room state - done
     // receive initial chat state
 }

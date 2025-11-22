@@ -93,17 +93,16 @@ func deleteRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	room := hub.rooms[roomName]
 	hub.roomsMutex.RUnlock()
 
-	hub.unregisterRoom <- room
-
-	roomDelete := <-hub.deleteRoom
-
 	// push update to frontend clients
 	msg := WSMessage{
 		Type: "delete_room",
-		Room: roomDelete,
+		Room: room.name,
 	}
 	jsonMsg, _ := json.Marshal(msg)
 	hub.broadcast <- jsonMsg
+
+	// delete on backend
+	hub.unregisterRoom <- room
 
 	// send success response
 	w.WriteHeader(http.StatusOK)
