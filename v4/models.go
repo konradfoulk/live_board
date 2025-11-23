@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"slices"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -17,10 +16,11 @@ type Client struct {
 }
 
 type Room struct {
-	name       string
-	clients    map[string]*Client
-	register   chan *Client
-	unregister chan *Client
+	name         string
+	clients      map[string]*Client
+	clientsMutex sync.RWMutex
+	broadcast    chan []byte
+	// unregister   chan *Client
 }
 
 type Hub struct {
@@ -30,12 +30,7 @@ type Hub struct {
 	roomsList        []string // for order and state
 	roomsMutex       sync.RWMutex
 	broadcast        chan []byte
-	registerClient   chan *Client
 	unregisterClient chan *Client
-	registerRoom     chan *Room
-	unregisterRoom   chan *Room
-	initRooms        chan []string
-	createRoom       chan string
 }
 
 func (c *Client) write() {
@@ -52,11 +47,21 @@ func (c *Client) read() {
 		switch msg.Type {
 		case "join_room":
 			if c.room != nil {
-				c.room.unregister <- c
+				c.room.unregister(c)
 			}
 
-			room := c.hub.rooms[msg.Room]
-			room.register <- c
+			c.hub.roomsMutex.RLock()
+			if room := c.hub.rooms[msg.Room]; room != nil {
+				room.clientsMutex.Lock()
+				c.room = room
+				room.clients[c.username] = c
+
+				// room.broadcast <- client joined this room
+
+				log.Printf("%s joined %s", c.username, room.name)
+				room.clientsMutex.Unlock()
+			}
+			c.hub.roomsMutex.RUnlock()
 		case "message":
 			if c.room != nil {
 
@@ -69,23 +74,28 @@ func (c *Client) read() {
 	// register for the new room
 }
 
+func (r *Room) unregister(client *Client) {
+	r.clientsMutex.Lock()
+	client.room = nil
+	delete(r.clients, client.username)
+
+	// room.broadcast <- client left this room
+
+	log.Printf("%s left %s", client.username, r.name)
+	r.clientsMutex.Unlock()
+}
+
 func (r *Room) run() {
-	for {
-		select {
-		case client := <-r.register:
-			client.room = r
+	// for {
+	// 	select {
+	// 	case client := <-r.unregister:
+	// 		client.room = nil
 
-			r.clients[client.username] = client
+	// 		delete(r.clients, client.username)
 
-			log.Printf("%s joined %s", client.username, r.name)
-		case client := <-r.unregister:
-			client.room = nil
-
-			delete(r.clients, client.username)
-
-			log.Printf("%s left %s", client.username, r.name)
-		}
-	}
+	// 		log.Printf("%s left %s", client.username, r.name)
+	// 	}
+	// }
 }
 
 func (h *Hub) run() {
@@ -103,36 +113,6 @@ func (h *Hub) run() {
 				}
 			}
 			h.clientsMutex.RUnlock()
-		case client := <-h.registerClient:
-			h.roomsMutex.RLock()
-
-			h.clientsMutex.Lock()
-			h.clients[client.username] = client
-			h.clientsMutex.Unlock()
-
-			h.initRooms <- h.roomsList
-			h.roomsMutex.RUnlock()
-
-			log.Printf("%s connected to hub", client.username)
-		case room := <-h.registerRoom:
-			h.roomsMutex.Lock()
-			h.rooms[room.name] = room
-			h.roomsList = append(h.roomsList, room.name)
-
-			h.createRoom <- room.name
-			h.roomsMutex.Unlock()
-
-			log.Printf("created room %s", room.name)
-		case room := <-h.unregisterRoom:
-			h.roomsMutex.Lock()
-
-			delete(h.rooms, room.name)
-			h.roomsList = slices.DeleteFunc(h.roomsList, func(name string) bool {
-				return name == room.name
-			})
-			h.roomsMutex.Unlock()
-
-			log.Printf("deleted room %s", room.name)
 		}
 	}
 }
@@ -148,10 +128,9 @@ func newClient(username string, conn *websocket.Conn, hub *Hub) *Client {
 
 func newRoom(name string) *Room {
 	return &Room{
-		name:       name,
-		clients:    make(map[string]*Client),
-		register:   make(chan *Client),
-		unregister: make(chan *Client),
+		name:    name,
+		clients: make(map[string]*Client),
+		// unregister: make(chan *Client),
 	}
 }
 
@@ -161,11 +140,6 @@ func makeHub() *Hub {
 		rooms:            make(map[string]*Room),
 		roomsList:        []string{},
 		broadcast:        make(chan []byte),
-		registerRoom:     make(chan *Room),
-		unregisterRoom:   make(chan *Room),
-		registerClient:   make(chan *Client),
 		unregisterClient: make(chan *Client),
-		initRooms:        make(chan []string),
-		createRoom:       make(chan string),
 	}
 }

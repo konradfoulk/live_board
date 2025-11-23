@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"slices"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -73,14 +74,19 @@ func createRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	// make and start room
 	room := newRoom(roomName)
 	go room.run()
-	hub.registerRoom <- room
 
-	roomCreated := <-hub.createRoom // make sure client doesn't get room that doesn't exist yet
+	// register room with hub
+	hub.roomsMutex.Lock()
+	hub.rooms[room.name] = room
+	hub.roomsList = append(hub.roomsList, room.name)
+
+	log.Printf("created room %s", room.name)
+	hub.roomsMutex.Unlock()
 
 	// push update to frontend clients
 	msg := WSMessage{
 		Type: "create_room",
-		Room: roomCreated,
+		Room: room.name,
 	}
 	jsonMsg, _ := json.Marshal(msg)
 	hub.broadcast <- jsonMsg
@@ -106,7 +112,20 @@ func deleteRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	hub.broadcast <- jsonMsg
 
 	// delete on backend
-	hub.unregisterRoom <- room
+	hub.roomsMutex.Lock()
+	if hub.rooms[room.name] != nil {
+		for _, client := range room.clients {
+			client.room = nil
+		}
+
+		delete(hub.rooms, room.name)
+		hub.roomsList = slices.DeleteFunc(hub.roomsList, func(name string) bool {
+			return name == room.name
+		})
+
+		log.Printf("deleted room %s", room.name)
+	}
+	hub.roomsMutex.Unlock()
 
 	// send success response
 	w.WriteHeader(http.StatusOK)
@@ -125,17 +144,22 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	username := r.URL.Query().Get("username")
 	client := newClient(username, conn, hub)
-
-	hub.registerClient <- client
 	go client.write()
 	go client.read()
 
+	hub.roomsMutex.RLock()
+	hub.clientsMutex.Lock()
+	hub.clients[client.username] = client
+
+	log.Printf("%s connected to hub", client.username)
+	hub.clientsMutex.Unlock()
+
 	// send initial state to frontend
-	rooms := <-hub.initRooms
 	msg := WSMessage{
 		Type:  "init_rooms",
-		Rooms: rooms,
+		Rooms: hub.roomsList,
 	}
+	hub.roomsMutex.RUnlock()
 	jsonMsg, _ := json.Marshal(msg)
 	client.send <- jsonMsg
 }
