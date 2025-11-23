@@ -44,7 +44,10 @@ function joinRoom(event) {
     console.log(currentRoom)
 
     // delete old room chat
-    document.querySelector(".roomChat").remove()
+    if (document.querySelector(".roomChat")) {
+        document.querySelector(".roomChat").remove() 
+    }
+
 
     // make new room chat and append it to roomChats
     const roomChat = document.createElement("div")

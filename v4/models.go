@@ -20,29 +20,55 @@ type Room struct {
 	clients      map[string]*Client
 	clientsMutex sync.RWMutex
 	broadcast    chan []byte
-	// unregister   chan *Client
 }
 
 type Hub struct {
-	clients          map[string]*Client
-	clientsMutex     sync.RWMutex
-	rooms            map[string]*Room
-	roomsList        []string // for order and state
-	roomsMutex       sync.RWMutex
-	broadcast        chan []byte
-	unregisterClient chan *Client
+	clients      map[string]*Client
+	clientsMutex sync.RWMutex
+	rooms        map[string]*Room
+	roomsList    []string // for order and state
+	roomsMutex   sync.RWMutex
+	broadcast    chan []byte
 }
 
 func (c *Client) write() {
+	// remove client from room and hub when client disconnects
+	// close WS connection
+	defer func() {
+		log.Println("write disconnect")
+		if c.room != nil {
+			c.room.unregister(c)
+		}
+		c.hub.unregister(c)
+		c.conn.Close()
+	}()
+
 	for message := range c.send {
 		c.conn.WriteMessage(websocket.TextMessage, message)
 	}
+	// channel closed, send close message
+	c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 }
 
 func (c *Client) read() {
+	// remove client from room and hub when client disconnects
+	// close WS connection
+	defer func() {
+		log.Println("read disconnect")
+		if c.room != nil {
+			c.room.unregister(c)
+		}
+		c.hub.unregister(c)
+		c.conn.Close()
+	}()
+
 	for {
 		var msg WSMessage
-		c.conn.ReadJSON(&msg) // break if there is an error (means connection was closed, ie client left)
+		err := c.conn.ReadJSON(&msg)
+		if err != nil {
+			// connection was closed, client left
+			break
+		}
 
 		switch msg.Type {
 		case "join_room":
@@ -68,20 +94,18 @@ func (c *Client) read() {
 			}
 		}
 	}
-
-	// receive room join request from front end
-	// unregister from current room (if not room === "")
-	// register for the new room
 }
 
 func (r *Room) unregister(client *Client) {
 	r.clientsMutex.Lock()
-	client.room = nil
-	delete(r.clients, client.username)
+	if client.room != nil {
+		client.room = nil
+		delete(r.clients, client.username)
 
-	// room.broadcast <- client left this room
+		// room.broadcast <- client left this room
 
-	log.Printf("%s left %s", client.username, r.name)
+		log.Printf("%s left %s", client.username, r.name)
+	}
 	r.clientsMutex.Unlock()
 }
 
@@ -96,6 +120,14 @@ func (r *Room) run() {
 	// 		log.Printf("%s left %s", client.username, r.name)
 	// 	}
 	// }
+}
+
+func (h *Hub) unregister(client *Client) {
+	h.clientsMutex.Lock()
+	delete(h.clients, client.username)
+
+	log.Printf("%s disconnected from hub", client.username)
+	h.clientsMutex.Unlock()
 }
 
 func (h *Hub) run() {
@@ -130,16 +162,14 @@ func newRoom(name string) *Room {
 	return &Room{
 		name:    name,
 		clients: make(map[string]*Client),
-		// unregister: make(chan *Client),
 	}
 }
 
 func makeHub() *Hub {
 	return &Hub{
-		clients:          make(map[string]*Client),
-		rooms:            make(map[string]*Room),
-		roomsList:        []string{},
-		broadcast:        make(chan []byte),
-		unregisterClient: make(chan *Client),
+		clients:   make(map[string]*Client),
+		rooms:     make(map[string]*Room),
+		roomsList: []string{},
+		broadcast: make(chan []byte),
 	}
 }
