@@ -8,11 +8,12 @@ import (
 )
 
 type Client struct {
-	username string
-	conn     *websocket.Conn
-	send     chan []byte
-	room     *Room
-	hub      *Hub
+	username       string
+	conn           *websocket.Conn
+	send           chan []byte
+	disconnectOnce sync.Once
+	room           *Room
+	hub            *Hub
 }
 
 type Room struct {
@@ -32,35 +33,20 @@ type Hub struct {
 }
 
 func (c *Client) write() {
-	// remove client from room and hub when client disconnects
-	// close WS connection
-	defer func() {
-		log.Println("write disconnect")
-		if c.room != nil {
-			c.room.unregister(c)
-		}
-		c.hub.unregister(c)
-		c.conn.Close()
-	}()
+	defer c.disconnectOnce.Do(c.disconnect)
 
 	for message := range c.send {
-		c.conn.WriteMessage(websocket.TextMessage, message)
+		err := c.conn.WriteMessage(websocket.TextMessage, message)
+		if err != nil {
+			break
+		}
 	}
 	// channel closed, send close message
 	c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 }
 
 func (c *Client) read() {
-	// remove client from room and hub when client disconnects
-	// close WS connection
-	defer func() {
-		log.Println("read disconnect")
-		if c.room != nil {
-			c.room.unregister(c)
-		}
-		c.hub.unregister(c)
-		c.conn.Close()
-	}()
+	defer c.disconnectOnce.Do(c.disconnect)
 
 	for {
 		var msg WSMessage
@@ -94,6 +80,17 @@ func (c *Client) read() {
 			}
 		}
 	}
+}
+
+func (c *Client) disconnect() {
+	if c.room != nil {
+		c.room.unregister(c)
+	}
+	c.hub.unregister(c)
+
+	c.conn.Close()
+
+	close(c.send)
 }
 
 func (r *Room) unregister(client *Client) {
@@ -141,7 +138,7 @@ func (h *Hub) run() {
 					// message sent successfully
 				default:
 					log.Printf("%s not responding", client.username)
-					close(client.send)
+					client.conn.Close()
 				}
 			}
 			h.clientsMutex.RUnlock()

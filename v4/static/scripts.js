@@ -40,11 +40,17 @@ function joinRoom(event) {
         return
     }
 
-    currentRoom = roomName
-    console.log(currentRoom)
+    if (currentRoom === "") {
+        currentRoom = roomName
 
-    // delete old room chat
-    if (document.querySelector(".roomChat")) {
+        // enable input bar
+        document.querySelectorAll("#messageInput [disabled]").forEach(element => {
+            element.disabled = false
+        })
+    } else {
+        currentRoom = roomName
+
+        // delete old roomChat
         document.querySelector(".roomChat").remove() 
     }
 
@@ -52,7 +58,7 @@ function joinRoom(event) {
     // make new room chat and append it to roomChats
     const roomChat = document.createElement("div")
     roomChat.className = "roomChat"
-    roomChat.setAttribute("data-room",roomName)
+    roomChat.setAttribute("data-room", roomName)
     document.querySelector("#roomChats").append(roomChat)
 
     msg = {
@@ -72,14 +78,18 @@ function connectToChat(username) {
 
     ws.onmessage = e => {
         const msg = JSON.parse(e.data)
+        const roomBtns = document.querySelector("#roomBtns")
 
         switch (msg.type) {
             case "create_room":
                 const newRoom = newRoomBtn(msg.room)
-                document.querySelector("#roomBtns").append(newRoom)
+                roomBtns.append(newRoom)
                 break
             case "delete_room":
                 if (msg.room === currentRoom) {
+                    document.querySelectorAll("#messageInput *").forEach(element => {
+                        element.disabled = true
+                    })
                     currentRoom = ""
                 }
                 document.querySelectorAll(`[data-room="${msg.room}"`).forEach(element => {
@@ -90,12 +100,11 @@ function connectToChat(username) {
                 if (msg.rooms) {
                     msg.rooms.reverse().forEach(room => {
                         const newRoom = newRoomBtn(room)
-                        document.querySelector("#roomBtns").prepend(newRoom)
+                        roomBtns.prepend(newRoom)
                     })
-                    // click #roomBtns first child
+                    roomBtns.firstChild.click()
                 }
                 break
-                // build room buttons and click the first one (if there is one) [joining the "default" room on load]
             case "message":
                 if (msg.room == currentRoom) {
                     switch (msg.messageType) {
