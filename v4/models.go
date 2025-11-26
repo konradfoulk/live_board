@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"sync"
 
@@ -70,14 +71,31 @@ func (c *Client) read() {
 
 				log.Printf("%s joined %s", c.username, room.name)
 
-				// room.broadcast <- client joined this room
+				// send presence update
+				formattedMsg := WSMessage{
+					Type:        "message",
+					MessageType: "join_message",
+					Username:    c.username,
+					Room:        room.name,
+				}
+				jsonMsg, _ := json.Marshal(formattedMsg)
+				room.broadcast <- jsonMsg
 
 				room.clientsMutex.Unlock()
 			}
 			c.hub.roomsMutex.RUnlock()
 		case "message":
-			if c.room != nil {
-
+			if c.room != nil && msg.Room == c.room.name {
+				// format and forward message to room broadcast
+				formattedMsg := WSMessage{
+					Type:        "message",
+					MessageType: "chat_message",
+					Username:    c.username,
+					Room:        c.room.name,
+					Content:     msg.Content,
+				}
+				jsonMsg, _ := json.Marshal(formattedMsg)
+				c.room.broadcast <- jsonMsg
 			}
 		}
 	}
@@ -100,9 +118,17 @@ func (r *Room) unregister(client *Client) {
 		client.room = nil
 		delete(r.clients, client.username)
 
-		// room.broadcast <- client left this room
-
 		log.Printf("%s left %s", client.username, r.name)
+
+		// send presence update
+		msg := WSMessage{
+			Type:        "message",
+			MessageType: "leave_message",
+			Username:    client.username,
+			Room:        r.name,
+		}
+		jsonMsg, _ := json.Marshal(msg)
+		r.broadcast <- jsonMsg
 	}
 	r.clientsMutex.Unlock()
 }

@@ -40,6 +40,12 @@ function joinRoom(event) {
         return
     }
 
+    // make new room chat and append it to roomChats
+    const roomChat = document.createElement("div")
+    roomChat.className = "roomChat"
+    roomChat.setAttribute("data-room", roomName)
+    document.querySelector("#roomChats").append(roomChat)
+
     if (currentRoom === "") {
         currentRoom = roomName
 
@@ -53,13 +59,6 @@ function joinRoom(event) {
         // delete old roomChat
         document.querySelector(".roomChat").remove() 
     }
-
-
-    // make new room chat and append it to roomChats
-    const roomChat = document.createElement("div")
-    roomChat.className = "roomChat"
-    roomChat.setAttribute("data-room", roomName)
-    document.querySelector("#roomChats").append(roomChat)
 
     msg = {
         type: "join_room",
@@ -108,10 +107,13 @@ function connectToChat(username) {
                 if (msg.room == currentRoom) {
                     switch (msg.messageType) {
                         case "join_message":
+                            document.querySelector(`.roomChat[data-room="${msg.room}"]`).innerHTML += `<p>${msg.username} joined ${msg.room}<p>`
                             break
                         case "leave_message":
+                            document.querySelector(`.roomChat[data-room="${msg.room}"]`).innerHTML += `<p>${msg.username} left ${msg.room}<p>`
                             break
                         case "chat_message":
+                            document.querySelector(`.roomChat[data-room="${msg.room}"]`).innerHTML += `<p>${msg.username}: ${msg.content}<p>`
                             break
                         case "init_chat":
                             break

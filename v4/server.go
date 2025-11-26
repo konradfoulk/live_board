@@ -22,6 +22,7 @@ type WSMessage struct {
 	MessageType string   `json:"messageType,omitempty"`
 	Username    string   `json:"username,omitempty"`
 	Room        string   `json:"room,omitempty"`
+	Content     string   `json:"content,omitempty"`
 	Rooms       []string `json:"rooms,omitempty"`
 }
 

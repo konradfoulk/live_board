@@ -1,5 +1,4 @@
 const joinModal =  document.querySelector("#joinModal")
-const newRoom = document.querySelector("#newRoom")
 const newRoomModal = document.querySelector("#newRoomModal")
 
 function newRoomBtn(roomName) {
@@ -44,9 +43,21 @@ function clickOff(e) {
 
 function addEventListeners() {
     // inputBar
+    document.querySelector("#messageInput").addEventListener("submit", e => {
+        const message = e.target.elements.message
+
+        msg = {
+            type: "message",
+            room: currentRoom,
+            content: message.value
+        }
+        ws.send(JSON.stringify(msg))
+
+        message.value = ""
+    })
 
     // display new room form
-    newRoom.addEventListener("click", e => {
+    document.querySelector("#newRoom").addEventListener("click", e => {
         e.stopPropagation() // prevent click from bubbling to DOM and activating clickOff
 
         newRoomModal.style.display = ""
@@ -56,8 +67,6 @@ function addEventListeners() {
 
     // get room name and create room
     newRoomModal.addEventListener("submit", e => {
-        e.preventDefault() // stop page reload
-
         const roomName = e.target.elements.roomName
         createRoom(roomName.value)
 
@@ -67,10 +76,14 @@ function addEventListeners() {
     })
 }
 
+document.querySelectorAll("form").forEach(element => {
+    element.addEventListener("submit", e => {
+        e.preventDefault() // stop page reload on form submissions
+    })
+})
+
 // get username and start app
 joinModal.addEventListener("submit", e => {
-    e.preventDefault() // stop page reload
-
     const username = e.target.elements.username.value
     if (username === "") {
         return
