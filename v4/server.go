@@ -119,8 +119,6 @@ func deleteRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 			client.room = nil
 			delete(room.clients, client.username)
 
-			// room.broadcast <- client left this room
-
 			log.Printf("%s left %s", client.username, room.name)
 		}
 		room.clientsMutex.Unlock()
@@ -129,6 +127,8 @@ func deleteRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		hub.roomsList = slices.DeleteFunc(hub.roomsList, func(name string) bool {
 			return name == room.name
 		})
+
+		close(room.broadcast)
 
 		log.Printf("deleted room %s", room.name)
 	}

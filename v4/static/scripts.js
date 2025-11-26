@@ -102,7 +102,6 @@ function connectToChat(username) {
                         const newRoom = newRoomBtn(room)
                         roomBtns.prepend(newRoom)
                     })
-                    roomBtns.firstChild.click()
                 }
                 break
             case "message":

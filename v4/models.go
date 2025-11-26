@@ -68,9 +68,10 @@ func (c *Client) read() {
 				c.room = room
 				room.clients[c.username] = c
 
+				log.Printf("%s joined %s", c.username, room.name)
+
 				// room.broadcast <- client joined this room
 
-				log.Printf("%s joined %s", c.username, room.name)
 				room.clientsMutex.Unlock()
 			}
 			c.hub.roomsMutex.RUnlock()
@@ -107,16 +108,19 @@ func (r *Room) unregister(client *Client) {
 }
 
 func (r *Room) run() {
-	// for {
-	// 	select {
-	// 	case client := <-r.unregister:
-	// 		client.room = nil
-
-	// 		delete(r.clients, client.username)
-
-	// 		log.Printf("%s left %s", client.username, r.name)
-	// 	}
-	// }
+	for message := range r.broadcast {
+		r.clientsMutex.RLock()
+		for _, client := range r.clients {
+			select {
+			case client.send <- message:
+				// message sent successfully
+			default:
+				log.Printf("%s not responding", client.username)
+				client.conn.Close()
+			}
+		}
+		r.clientsMutex.RUnlock()
+	}
 }
 
 func (h *Hub) unregister(client *Client) {
@@ -128,21 +132,18 @@ func (h *Hub) unregister(client *Client) {
 }
 
 func (h *Hub) run() {
-	for {
-		select {
-		case message := <-h.broadcast:
-			h.clientsMutex.RLock()
-			for _, client := range h.clients {
-				select {
-				case client.send <- message:
-					// message sent successfully
-				default:
-					log.Printf("%s not responding", client.username)
-					client.conn.Close()
-				}
+	for message := range h.broadcast {
+		h.clientsMutex.RLock()
+		for _, client := range h.clients {
+			select {
+			case client.send <- message:
+				// message sent successfully
+			default:
+				log.Printf("%s not responding", client.username)
+				client.conn.Close()
 			}
-			h.clientsMutex.RUnlock()
 		}
+		h.clientsMutex.RUnlock()
 	}
 }
 
@@ -157,8 +158,9 @@ func newClient(username string, conn *websocket.Conn, hub *Hub) *Client {
 
 func newRoom(name string) *Room {
 	return &Room{
-		name:    name,
-		clients: make(map[string]*Client),
+		name:      name,
+		clients:   make(map[string]*Client),
+		broadcast: make(chan []byte),
 	}
 }
 
