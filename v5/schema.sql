@@ -1,8 +1,7 @@
 -- Users table
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL
+    username TEXT UNIQUE NOT NULL
 );
 
 -- Rooms table
@@ -15,9 +14,10 @@ CREATE TABLE rooms (
 -- Messages table
 CREATE TABLE messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_type TEXT NOT NULL, -- "join", "leave", "chat"
     room INTEGER NOT NULL,
-    user INTEGER NOT NULL, -- what about join and leave messages from the room or hub? merge type system from structs?
-    content TEXT NOT NULL,
+    user INTEGER NOT NULL,
+    content TEXT, -- NULL for join and leave messages
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (room) REFERENCES rooms(id) ON DELETE CASCADE,
     FOREIGN KEY (user) REFERENCES users(id)
