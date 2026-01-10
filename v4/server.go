@@ -167,7 +167,7 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		Type:  "init_rooms",
 		Rooms: hub.roomsList,
 	}
-	hub.roomsMutex.RUnlock()
 	jsonMsg, _ := json.Marshal(msg)
 	client.send <- jsonMsg
+	hub.roomsMutex.RUnlock()
 }
