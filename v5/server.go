@@ -103,8 +103,8 @@ func createRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	room := newRoom(roomName)
 	go room.run()
+
 	hub.rooms[room.name] = room
-	hub.roomsList = append(hub.roomsList, room.name)
 
 	log.Printf("created room %s", room.name)
 	hub.roomsMutex.Unlock()
@@ -171,4 +171,47 @@ func deleteRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	// send success response
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"name": roomName})
+}
+
+// no client or message persistence yet, room persistence test
+func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
+	log.Println("WebSocket endpoint hit")
+
+	// upgrade connection to websocket
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("upgrade failed:", err)
+		return
+	}
+
+	username := r.URL.Query().Get("username")
+	client := newClient(username, conn, hub)
+	go client.write()
+	go client.read()
+
+	hub.roomsMutex.RLock()
+	hub.clientsMutex.Lock()
+	hub.clients[client.username] = client
+
+	log.Printf("%s connected to hub", client.username)
+	hub.clientsMutex.Unlock()
+
+	// get list of existing rooms
+	rows, _ := db.Query("SELECT name FROM rooms ORDER BY created_at ASC")
+	defer rows.Close()
+	roomsList := []string{}
+	for rows.Next() {
+		var roomName string
+		rows.Scan(&roomName)
+		roomsList = append(roomsList, roomName)
+	}
+
+	// send initial state to frontend
+	msg := WSMessage{
+		Type:  "init_rooms",
+		Rooms: roomsList,
+	}
+	jsonMsg, _ := json.Marshal(msg)
+	client.send <- jsonMsg
+	hub.roomsMutex.RUnlock()
 }
