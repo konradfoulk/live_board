@@ -79,7 +79,7 @@ document.querySelectorAll("form").forEach(element => {
 joinModal.addEventListener("submit", e => {
     const username = e.target.elements.username.value
     const password = e.target.elements.password
-    if (username === "" || password === "") {
+    if (username === "" || password.value === "") {
         return
     }
 
