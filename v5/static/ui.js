@@ -78,7 +78,8 @@ document.querySelectorAll("form").forEach(element => {
 // get username and start app
 joinModal.addEventListener("submit", e => {
     const username = e.target.elements.username.value
-    if (username === "") {
+    const password = e.target.elements.password
+    if (username === "" || password === "") {
         return
     }
 
@@ -87,7 +88,7 @@ joinModal.addEventListener("submit", e => {
         addEventListeners()
         joinModal.style.display = "none"
     } else {
-        e.target.elements.password.value = ""
+        password.value = ""
         return
     }
 })
