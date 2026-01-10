@@ -173,7 +173,6 @@ func deleteRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"name": roomName})
 }
 
-// no client or message persistence yet, room persistence test
 func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	log.Println("WebSocket endpoint hit")
 

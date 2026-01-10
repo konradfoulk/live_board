@@ -121,12 +121,4 @@ function connectToChat(username) {
                 }
         }
     }
-
-
-    // build websocket events
-    // receive a chat message (for what room?)
-    // receive a create room update - done
-    // receive a delete room update - done
-    // receive intial room state - done
-    // receive initial chat state
 }

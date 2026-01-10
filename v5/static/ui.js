@@ -25,13 +25,6 @@ function newRoomBtn(roomName) {
     deleteBtn.addEventListener("click", deleteRoom)
 
     return roomBtnContainer
-
-    // create the element
-
-    // add an event listener for when it is clicked
-    // create a new chat element with the proper room attribute (give a place for incoming websocket message to go)
-    // tell the ws endpoint to change rooms (get initial state from response and populate it in the new div)
-    // delete old room div and make new room div visible (done immediately after resopnse is sent so while waiting to load, users waits at an empty screen and if they try to type, they will be in the new room so no weird races)
 }
 
 // deactivate new room form if clicked off
