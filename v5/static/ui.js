@@ -81,10 +81,15 @@ joinModal.addEventListener("submit", e => {
     if (username === "") {
         return
     }
-    connectToChat(username)
-    addEventListeners()
 
-    joinModal.style.display = "none"
+    // connect to server, returns false for failed auth
+    if (connectToChat(username)) {
+        addEventListeners()
+        joinModal.style.display = "none"
+    } else {
+        e.target.elements.password.value = ""
+        return
+    }
 })
 
 joinModal.elements.username.focus()

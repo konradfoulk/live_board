@@ -69,7 +69,8 @@ function joinRoom(event) {
 
 // establishes websocket connection and recieving ports
 function connectToChat(username) {
-    ws = new WebSocket(`ws://localhost:8080/ws?username=${username}`)
+    ws = new WebSocket(`ws://localhost:8080/ws?username=${username}`) // if error here (incorect password) return "false"
+    // return false
 
     ws.onopen = () => {
         console.log(`${username} connected to server`)
@@ -121,4 +122,6 @@ function connectToChat(username) {
                 }
         }
     }
+
+    return true // successful auth and connection
 }

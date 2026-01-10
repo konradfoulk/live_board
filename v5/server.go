@@ -173,8 +173,27 @@ func deleteRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"name": roomName})
 }
 
+// need better error handling here for the client side
 func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	log.Println("WebSocket endpoint hit")
+
+	username := r.URL.Query().Get("username")
+
+	// query db
+	var userID int
+	err := db.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID)
+	if err == sql.ErrNoRows {
+		// user does not extist, create field in db
+		result, _ := db.Exec("INSERT INTO users (username, password_hash) VALUES (?, ?)", username, "")
+		id, _ := result.LastInsertId()
+		userID = int(id)
+		log.Printf("created new user: %s (id: %d)", username, userID)
+	} else if err != nil {
+		// Database error
+		log.Println("database error:", err)
+		return
+	}
+	log.Printf("%s (id: %d) connecting", username, userID)
 
 	// upgrade connection to websocket
 	conn, err := upgrader.Upgrade(w, r, nil)
@@ -183,7 +202,6 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	username := r.URL.Query().Get("username")
 	client := newClient(username, conn, hub)
 	go client.write()
 	go client.read()
