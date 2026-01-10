@@ -137,7 +137,7 @@ func deleteRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	// send success response
 	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(map[string]string{"name": roomName}) // how to get roomName from url (api endpoint)
+	json.NewEncoder(w).Encode(map[string]string{"name": roomName})
 }
 
 func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/gorilla/websocket"
 )
@@ -118,5 +119,56 @@ func createRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	// send success response
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(map[string]string{"name": roomName})
+}
+
+func deleteRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
+	roomName := strings.TrimPrefix(r.URL.Path, "/api/rooms/")
+
+	// delete on backend
+	hub.roomsMutex.Lock()
+	room := hub.rooms[roomName]
+	if room != nil {
+		// delete from db
+		if _, err := db.Exec("DELETE FROM rooms WHERE name = ?", room.name); err != nil {
+			hub.roomsMutex.Unlock()
+
+			// send error response
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(map[string]string{
+				"error": "failed to delete room",
+			})
+			return
+		}
+
+		// push update to frontend clients
+		msg := WSMessage{
+			Type: "delete_room",
+			Room: room.name,
+		}
+		jsonMsg, _ := json.Marshal(msg)
+		hub.broadcast <- jsonMsg
+
+		// remove clients from room
+		room.clientsMutex.Lock()
+		for _, client := range room.clients {
+			client.room = nil
+			delete(room.clients, client.username)
+
+			log.Printf("%s left %s", client.username, room.name)
+		}
+		room.clientsMutex.Unlock()
+
+		// delete from memory
+		delete(hub.rooms, room.name)
+
+		close(room.broadcast)
+
+		log.Printf("deleted room %s", room.name)
+	}
+	hub.roomsMutex.Unlock()
+
+	// send success response
+	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"name": roomName})
 }
