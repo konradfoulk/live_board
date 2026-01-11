@@ -17,8 +17,10 @@ CREATE TABLE messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     room INTEGER NOT NULL,
     user INTEGER NOT NULL,
+    username TEXT NOT NULL,
     content TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (room) REFERENCES rooms(id) ON DELETE CASCADE,
-    FOREIGN KEY (user) REFERENCES users(id)
+    FOREIGN KEY (user) REFERENCES users(id),
+    FOREIGN KEY (username) REFERENCES users(name)
 );

@@ -123,6 +123,7 @@ function connectToChat(username, password) {
                                 document.querySelector(`.roomChat[data-room="${msg.room}"]`).innerHTML += `<p>${msg.username}: ${msg.content}<p>`
                                 break
                             case "init_chat":
+                                // recieve and process message packet and paste before the first element within the chat div
                                 break
                         }
                     }

@@ -65,6 +65,8 @@ func (c *Client) read() {
 			c.hub.roomsMutex.RLock()
 			if room := c.hub.rooms[msg.Room]; room != nil {
 				room.clientsMutex.Lock()
+				// go (asynchronously)[get messages for room with that id and pass message packet to client.send]
+
 				c.room = room
 				room.clients[c.username] = c
 
@@ -135,6 +137,7 @@ func (r *Room) unregister(client *Client) {
 func (r *Room) run() {
 	for message := range r.broadcast {
 		r.clientsMutex.RLock()
+		// go (asynchronously)[persist message on database]
 		for _, client := range r.clients {
 			select {
 			case client.send <- message:
