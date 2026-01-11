@@ -1,0 +1,82 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    height: 100vh;
+    width: 100vw;
+    display: flex;
+}
+
+#joinModal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+}
+
+#joinModal button {
+    align-self: flex-end;
+}
+
+#newRoomModal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#counter {
+    position: absolute;
+    left: 90%;
+    transform: translate(-100%, 0%);
+}
+
+#rooms {
+    background-color: gray;
+    width: 250px;
+    display: flex;
+    flex-direction: column;
+    align-items: end;
+}
+
+#roomBtns {
+    flex: 1;
+    width: 100%;
+    overflow-y: auto;
+}
+
+.roomBtnContainer {
+    display: flex;
+}
+
+.roomBtnContainer .roomBtn {
+    flex: 1;
+}
+
+#chat {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+#roomChats {
+    background-color: darkgray;
+    flex: 1;
+    overflow-y: auto;
+}
+
+#messageInput {
+    background-color: lightgray;
+    display: flex;
+    padding: 5px;
+    gap: 5px;
+}
+
+#messageInput input {
+    flex: 1;
+}
