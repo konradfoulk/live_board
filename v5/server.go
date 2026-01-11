@@ -29,6 +29,7 @@ type WSMessage struct {
 	Content     string              `json:"content,omitempty"`
 	Rooms       []string            `json:"rooms,omitempty"`
 	Messages    []map[string]string `json:"messages,omitempty"`
+	UserCount   int                 `json:"userCount,omitempty"`
 }
 
 func main() {
@@ -250,4 +251,12 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	jsonMsg, _ := json.Marshal(msg)
 	client.send <- jsonMsg
 	hub.roomsMutex.RUnlock()
+
+	// update user counter
+	msg = WSMessage{
+		Type:      "user_count",
+		UserCount: len(hub.clients),
+	}
+	jsonMsg, _ = json.Marshal(msg)
+	hub.broadcast <- jsonMsg
 }

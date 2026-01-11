@@ -143,6 +143,10 @@ function connectToChat(username, password) {
                                 break
                         }
                     }
+                    break
+                case "user_count":
+                    document.querySelector("#count").textContent = msg.userCount
+                    break
             }
         }
     })
