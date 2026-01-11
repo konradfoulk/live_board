@@ -76,18 +76,19 @@ document.querySelectorAll("form").forEach(element => {
 })
 
 // get username and start app
-joinModal.addEventListener("submit", e => {
+joinModal.addEventListener("submit", async e => {
     const username = e.target.elements.username.value
     const password = e.target.elements.password
     if (username === "" || password.value === "") {
         return
     }
 
-    // connect to server, returns false for failed auth
-    if (connectToChat(username)) {
+    try {
+        await connectToChat(username, password.value)
         addEventListeners()
         joinModal.style.display = "none"
-    } else {
+    } catch {
+        // auth failed or error
         password.value = ""
         return
     }

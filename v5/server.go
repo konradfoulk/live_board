@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/gorilla/websocket"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // global db variable for access
@@ -178,20 +179,33 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	log.Println("WebSocket endpoint hit")
 
 	username := r.URL.Query().Get("username")
+	password := r.URL.Query().Get("password")
 
-	// query db
+	// check if user exists
 	var userID int
-	err := db.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&userID)
+	var storedHash string
+	err := db.QueryRow("SELECT id, password_hash FROM users WHERE username = ?", username).Scan(&userID, &storedHash)
+
+	// authenticate
 	if err == sql.ErrNoRows {
-		// user does not extist, create field in db
-		result, _ := db.Exec("INSERT INTO users (username, password_hash) VALUES (?, ?)", username, "")
+		// new user
+		// hash password and create field
+		passwordHash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+		result, _ := db.Exec("INSERT INTO users (username, password_hash) VALUES (?, ?)", username, passwordHash)
 		id, _ := result.LastInsertId()
 		userID = int(id)
 		log.Printf("created new user: %s (id: %d)", username, userID)
 	} else if err != nil {
-		// Database error
+		// database error
 		log.Println("database error:", err)
+		w.WriteHeader(http.StatusInternalServerError)
 		return
+	} else {
+		// authenticate existing user
+		if err = bcrypt.CompareHashAndPassword([]byte(storedHash), []byte(password)); err != nil {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
 	}
 	log.Printf("%s (id: %d) connecting", username, userID)
 

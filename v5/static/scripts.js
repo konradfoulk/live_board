@@ -68,60 +68,65 @@ function joinRoom(event) {
 }
 
 // establishes websocket connection and recieving ports
-function connectToChat(username) {
-    ws = new WebSocket(`ws://localhost:8080/ws?username=${username}`) // if error here (incorect password) return "false"
-    // return false
+function connectToChat(username, password) {
+    return new Promise((resolve, reject) => {
+        ws = new WebSocket(`ws://localhost:8080/ws?username=${username}&password=${password}`)
 
-    ws.onopen = () => {
-        console.log(`${username} connected to server`)
-    }
-
-    ws.onmessage = e => {
-        const msg = JSON.parse(e.data)
-        const roomBtns = document.querySelector("#roomBtns")
-
-        switch (msg.type) {
-            case "create_room":
-                const newRoom = newRoomBtn(msg.room)
-                roomBtns.append(newRoom)
-                break
-            case "delete_room":
-                if (msg.room === currentRoom) {
-                    document.querySelectorAll("#messageInput *").forEach(element => {
-                        element.disabled = true
-                    })
-                    currentRoom = ""
-                }
-                document.querySelectorAll(`[data-room="${msg.room}"`).forEach(element => {
-                    element.remove()
-                })
-                break
-            case "init_rooms":
-                if (msg.rooms) {
-                    msg.rooms.reverse().forEach(room => {
-                        const newRoom = newRoomBtn(room)
-                        roomBtns.prepend(newRoom)
-                    })
-                }
-                break
-            case "message":
-                if (msg.room == currentRoom) {
-                    switch (msg.messageType) {
-                        case "join_message":
-                            document.querySelector(`.roomChat[data-room="${msg.room}"]`).innerHTML += `<p>${msg.username} joined ${msg.room}<p>`
-                            break
-                        case "leave_message":
-                            document.querySelector(`.roomChat[data-room="${msg.room}"]`).innerHTML += `<p>${msg.username} left ${msg.room}<p>`
-                            break
-                        case "chat_message":
-                            document.querySelector(`.roomChat[data-room="${msg.room}"]`).innerHTML += `<p>${msg.username}: ${msg.content}<p>`
-                            break
-                        case "init_chat":
-                            break
-                    }
-                }
+        ws.onopen = () => {
+            console.log(`${username} connected to server`)
+            resolve()
         }
-    }
 
-    return true // successful auth and connection
+        ws.onerror = () => {
+            console.log("connection failed")
+            reject()
+        }
+
+        ws.onmessage = e => {
+            const msg = JSON.parse(e.data)
+            const roomBtns = document.querySelector("#roomBtns")
+
+            switch (msg.type) {
+                case "create_room":
+                    const newRoom = newRoomBtn(msg.room)
+                    roomBtns.append(newRoom)
+                    break
+                case "delete_room":
+                    if (msg.room === currentRoom) {
+                        document.querySelectorAll("#messageInput *").forEach(element => {
+                            element.disabled = true
+                        })
+                        currentRoom = ""
+                    }
+                    document.querySelectorAll(`[data-room="${msg.room}"`).forEach(element => {
+                        element.remove()
+                    })
+                    break
+                case "init_rooms":
+                    if (msg.rooms) {
+                        msg.rooms.reverse().forEach(room => {
+                            const newRoom = newRoomBtn(room)
+                            roomBtns.prepend(newRoom)
+                        })
+                    }
+                    break
+                case "message":
+                    if (msg.room == currentRoom) {
+                        switch (msg.messageType) {
+                            case "join_message":
+                                document.querySelector(`.roomChat[data-room="${msg.room}"]`).innerHTML += `<p>${msg.username} joined ${msg.room}<p>`
+                                break
+                            case "leave_message":
+                                document.querySelector(`.roomChat[data-room="${msg.room}"]`).innerHTML += `<p>${msg.username} left ${msg.room}<p>`
+                                break
+                            case "chat_message":
+                                document.querySelector(`.roomChat[data-room="${msg.room}"]`).innerHTML += `<p>${msg.username}: ${msg.content}<p>`
+                                break
+                            case "init_chat":
+                                break
+                        }
+                    }
+            }
+        }
+    })
 }
