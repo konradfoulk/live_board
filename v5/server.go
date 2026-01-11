@@ -42,13 +42,14 @@ func main() {
 	db.Exec("INSERT OR IGNORE INTO rooms (name) VALUES ('general')")
 
 	// load state from db in memory
-	rows, _ := db.Query("SELECT name FROM rooms")
+	rows, _ := db.Query("SELECT id, name FROM rooms")
 	defer rows.Close()
 	for rows.Next() {
 		var roomName string
-		rows.Scan(&roomName)
+		var roomID int
+		rows.Scan(&roomID, &roomName)
 
-		room := newRoom(roomName)
+		room := newRoom(roomID, roomName)
 		go room.run()
 		hub.rooms[room.name] = room
 	}
@@ -91,7 +92,8 @@ func createRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	// persist, make, and start room and register with hub
 	hub.roomsMutex.Lock()
-	if _, err := db.Exec("INSERT INTO rooms (name) VALUES (?)", roomName); err != nil {
+	result, err := db.Exec("INSERT INTO rooms (name) VALUES (?)", roomName)
+	if err != nil {
 		hub.roomsMutex.Unlock()
 
 		// Send error response to client
@@ -102,7 +104,9 @@ func createRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	room := newRoom(roomName)
+	id, _ := result.LastInsertId()
+	roomID := int(id)
+	room := newRoom(roomID, roomName)
 	go room.run()
 
 	hub.rooms[room.name] = room
@@ -216,7 +220,7 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client := newClient(username, conn, hub)
+	client := newClient(userID, username, conn, hub)
 	go client.write()
 	go client.read()
 

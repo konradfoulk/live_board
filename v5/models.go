@@ -9,6 +9,7 @@ import (
 )
 
 type Client struct {
+	id             int
 	username       string
 	conn           *websocket.Conn
 	send           chan []byte
@@ -18,6 +19,7 @@ type Client struct {
 }
 
 type Room struct {
+	id           int
 	name         string
 	clients      map[string]*Client
 	clientsMutex sync.RWMutex
@@ -175,8 +177,9 @@ func (h *Hub) run() {
 	}
 }
 
-func newClient(username string, conn *websocket.Conn, hub *Hub) *Client {
+func newClient(id int, username string, conn *websocket.Conn, hub *Hub) *Client {
 	return &Client{
+		id:       id,
 		username: username,
 		conn:     conn,
 		send:     make(chan []byte, 256),
@@ -184,8 +187,9 @@ func newClient(username string, conn *websocket.Conn, hub *Hub) *Client {
 	}
 }
 
-func newRoom(name string) *Room {
+func newRoom(id int, name string) *Room {
 	return &Room{
+		id:        id,
 		name:      name,
 		clients:   make(map[string]*Client),
 		broadcast: make(chan []byte),

@@ -22,5 +22,4 @@ CREATE TABLE messages (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (room) REFERENCES rooms(id) ON DELETE CASCADE,
     FOREIGN KEY (user) REFERENCES users(id),
-    FOREIGN KEY (username) REFERENCES users(name)
 );
