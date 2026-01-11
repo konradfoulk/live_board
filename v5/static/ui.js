@@ -1,5 +1,6 @@
 const joinModal =  document.querySelector("#joinModal")
 const newRoomModal = document.querySelector("#newRoomModal")
+const counter = document.querySelector("#counter")
 
 function newRoomBtn(roomName) {
     const roomBtnContainer = document.createElement("div")
@@ -87,6 +88,7 @@ joinModal.addEventListener("submit", async e => {
         await connectToChat(username, password.value)
         addEventListeners()
         joinModal.style.display = "none"
+        counter.style.display = ""
     } catch {
         // auth failed or error
         password.value = ""

@@ -1,6 +1,11 @@
 let ws = null
 let currentRoom = ""
 
+function chatAutoScroll() {
+    const chat = document.querySelector("#roomChats")
+    chat.scrollTop = chat.scrollHeight
+}
+
 async function createRoom(roomName) {
     // call server API
     const response = await fetch("/api/rooms", {
@@ -65,6 +70,8 @@ function joinRoom(event) {
         room: roomName
     }
     ws.send(JSON.stringify(msg))
+
+    chatAutoScroll()
 }
 
 // establishes websocket connection and recieving ports
@@ -115,12 +122,15 @@ function connectToChat(username, password) {
                         switch (msg.messageType) {
                             case "join_message":
                                 document.querySelector(`.roomChat[data-room="${msg.room}"]`).innerHTML += `<p>${msg.username} joined ${msg.room}<p>`
+                                chatAutoScroll()
                                 break
                             case "leave_message":
                                 document.querySelector(`.roomChat[data-room="${msg.room}"]`).innerHTML += `<p>${msg.username} left ${msg.room}<p>`
+                                chatAutoScroll()
                                 break
                             case "chat_message":
                                 document.querySelector(`.roomChat[data-room="${msg.room}"]`).innerHTML += `<p>${msg.username}: ${msg.content}<p>`
+                                chatAutoScroll()
                                 break
                             case "init_chat":
                                 msg.messages.forEach(i => {
@@ -128,6 +138,7 @@ function connectToChat(username, password) {
                                     p.innerHTML = `${i.username}: ${i.content}`
 
                                     document.querySelector(`.roomChat[data-room="${msg.room}"]`).prepend(p)
+                                    chatAutoScroll()
                                 })
                                 break
                         }
