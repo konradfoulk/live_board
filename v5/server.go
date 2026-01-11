@@ -22,12 +22,13 @@ var upgrader = websocket.Upgrader{
 }
 
 type WSMessage struct {
-	Type        string   `json:"type"`
-	MessageType string   `json:"messageType,omitempty"`
-	Username    string   `json:"username,omitempty"`
-	Room        string   `json:"room,omitempty"`
-	Content     string   `json:"content,omitempty"`
-	Rooms       []string `json:"rooms,omitempty"`
+	Type        string              `json:"type"`
+	MessageType string              `json:"messageType,omitempty"`
+	Username    string              `json:"username,omitempty"`
+	Room        string              `json:"room,omitempty"`
+	Content     string              `json:"content,omitempty"`
+	Rooms       []string            `json:"rooms,omitempty"`
+	Messages    []map[string]string `json:"messages,omitempty"`
 }
 
 func main() {

@@ -67,7 +67,8 @@ func (c *Client) read() {
 			c.hub.roomsMutex.RLock()
 			if room := c.hub.rooms[msg.Room]; room != nil {
 				room.clientsMutex.Lock()
-				// go (asynchronously)[get messages for room with that id and pass message packet to client.send]
+
+				go c.loadChatHistory(room.id, room.name)
 
 				c.room = room
 				room.clients[c.username] = c
@@ -89,6 +90,9 @@ func (c *Client) read() {
 			c.hub.roomsMutex.RUnlock()
 		case "message":
 			if c.room != nil && msg.Room == c.room.name {
+
+				go c.persistMessage(c.room.id, msg.Content)
+
 				// format and forward message to room broadcast
 				formattedMsg := WSMessage{
 					Type:        "message",
@@ -115,6 +119,46 @@ func (c *Client) disconnect() {
 	close(c.send)
 }
 
+func (c *Client) loadChatHistory(roomID int, roomName string) {
+	rows, err := db.Query(`
+        SELECT username, content 
+        FROM messages 
+        WHERE room = ? 
+        ORDER BY created_at DESC 
+        LIMIT 200`, roomID)
+	if err != nil {
+		// db error
+		return
+	}
+	defer rows.Close()
+
+	messages := []map[string]string{}
+	for rows.Next() {
+		var username, content string
+		rows.Scan(&username, &content)
+		messages = append(messages, map[string]string{
+			"username": username,
+			"content":  content,
+		})
+	}
+
+	if len(messages) > 0 {
+		msg := WSMessage{
+			Type:        "message",
+			MessageType: "init_chat",
+			Messages:    messages,
+			Room:        roomName,
+		}
+		jsonMsg, _ := json.Marshal(msg)
+		c.send <- jsonMsg
+	}
+}
+
+func (c *Client) persistMessage(roomID int, content string) {
+	db.Exec(`INSERT INTO messages (room, user, username, content) VALUES (?, ?, ?, ?)`,
+		roomID, c.id, c.username, content)
+}
+
 func (r *Room) unregister(client *Client) {
 	r.clientsMutex.Lock()
 	if client.room != nil {
@@ -139,7 +183,6 @@ func (r *Room) unregister(client *Client) {
 func (r *Room) run() {
 	for message := range r.broadcast {
 		r.clientsMutex.RLock()
-		// go (asynchronously)[persist message on database]
 		for _, client := range r.clients {
 			select {
 			case client.send <- message:
