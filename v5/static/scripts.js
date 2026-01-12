@@ -77,7 +77,8 @@ function joinRoom(event) {
 // establishes websocket connection and recieving ports
 function connectToChat(username, password) {
     return new Promise((resolve, reject) => {
-        ws = new WebSocket(`ws://localhost:8080/ws?username=${username}&password=${password}`)
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+        ws = new WebSocket(`${protocol}//${window.location.host}/ws?username=${username}&password=${password}`)
 
         ws.onopen = () => {
             console.log(`${username} connected to server`)
