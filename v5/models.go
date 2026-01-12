@@ -117,6 +117,14 @@ func (c *Client) disconnect() {
 	c.conn.Close()
 
 	close(c.send)
+
+	// update user counter
+	msg := WSMessage{
+		Type:      "user_count",
+		UserCount: len(c.hub.clients),
+	}
+	jsonMsg, _ := json.Marshal(msg)
+	c.hub.broadcast <- jsonMsg
 }
 
 func (c *Client) loadChatHistory(roomID int, roomName string) {
