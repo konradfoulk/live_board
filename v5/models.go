@@ -21,6 +21,7 @@ type Client struct {
 type Room struct {
 	id           int
 	name         string
+	hub          *Hub
 	clients      map[string]*Client
 	clientsMutex sync.RWMutex
 	broadcast    chan []byte
@@ -190,17 +191,28 @@ func (r *Room) unregister(client *Client) {
 
 func (r *Room) run() {
 	for message := range r.broadcast {
+		sent := false
 		r.clientsMutex.RLock()
 		for _, client := range r.clients {
 			select {
 			case client.send <- message:
 				// message sent successfully
+				sent = true
 			default:
 				log.Printf("%s not responding", client.username)
 				client.conn.Close()
 			}
 		}
 		r.clientsMutex.RUnlock()
+
+		if sent {
+			msg := WSMessage{
+				Type: "notification",
+				Room: r.name,
+			}
+			jsonMsg, _ := json.Marshal(msg)
+			r.hub.broadcast <- jsonMsg
+		}
 	}
 }
 
@@ -238,10 +250,11 @@ func newClient(id int, username string, conn *websocket.Conn, hub *Hub) *Client 
 	}
 }
 
-func newRoom(id int, name string) *Room {
+func newRoom(id int, name string, hub *Hub) *Room {
 	return &Room{
 		id:        id,
 		name:      name,
+		hub:       hub,
 		clients:   make(map[string]*Client),
 		broadcast: make(chan []byte),
 	}

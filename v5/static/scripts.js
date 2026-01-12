@@ -71,6 +71,7 @@ function joinRoom(event) {
     }
     ws.send(JSON.stringify(msg))
 
+    event.target.style.fontWeight = ""
     chatAutoScroll()
 }
 
@@ -148,6 +149,10 @@ function connectToChat(username, password) {
                 case "user_count":
                     document.querySelector("#count").textContent = msg.userCount
                     break
+                case "notification":
+                    if (msg.room != currentRoom) {
+                        document.querySelector(`.roomBtn[data-room="${msg.room}"]`).style.fontWeight = "bold"
+                    }
             }
         }
     })

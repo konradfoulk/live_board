@@ -52,7 +52,7 @@ func main() {
 		var roomID int
 		rows.Scan(&roomID, &roomName)
 
-		room := newRoom(roomID, roomName)
+		room := newRoom(roomID, roomName, hub)
 		go room.run()
 		hub.rooms[room.name] = room
 	}
@@ -111,7 +111,7 @@ func createRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-	room := newRoom(roomID, roomName)
+	room := newRoom(roomID, roomName, hub)
 	go room.run()
 
 	hub.rooms[room.name] = room
