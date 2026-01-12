@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -41,7 +42,7 @@ func main() {
 	go hub.run()
 
 	// make default room
-	db.Exec("INSERT OR IGNORE INTO rooms (name) VALUES ('general')")
+	db.Exec("INSERT INTO rooms (name) VALUES ('general') ON CONFLICT DO NOTHING")
 
 	// load state from db in memory
 	rows, _ := db.Query("SELECT id, name FROM rooms")
@@ -77,8 +78,12 @@ func main() {
 	})
 
 	// start server
-	log.Println("chat server starting on :8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	log.Printf("chat server starting on :%s", port)
+	log.Fatal(http.ListenAndServe(":"+port, nil))
 }
 
 func createRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
@@ -94,7 +99,8 @@ func createRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 
 	// persist, make, and start room and register with hub
 	hub.roomsMutex.Lock()
-	result, err := db.Exec("INSERT INTO rooms (name) VALUES (?)", roomName)
+	var roomID int
+	err := db.QueryRow("INSERT INTO rooms (name) VALUES ($1) RETURNING id", roomName).Scan(&roomID)
 	if err != nil {
 		hub.roomsMutex.Unlock()
 
@@ -105,9 +111,6 @@ func createRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 		})
 		return
 	}
-
-	id, _ := result.LastInsertId()
-	roomID := int(id)
 	room := newRoom(roomID, roomName)
 	go room.run()
 
@@ -137,7 +140,7 @@ func deleteRoom(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	room := hub.rooms[roomName]
 	if room != nil {
 		// delete from db
-		if _, err := db.Exec("DELETE FROM rooms WHERE name = ?", room.name); err != nil {
+		if _, err := db.Exec("DELETE FROM rooms WHERE name = $1", room.name); err != nil {
 			hub.roomsMutex.Unlock()
 
 			// send error response
@@ -190,16 +193,14 @@ func handleWS(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	// check if user exists
 	var userID int
 	var storedHash string
-	err := db.QueryRow("SELECT id, password_hash FROM users WHERE username = ?", username).Scan(&userID, &storedHash)
+	err := db.QueryRow("SELECT id, password_hash FROM users WHERE username = $1", username).Scan(&userID, &storedHash)
 
 	// authenticate
 	if err == sql.ErrNoRows {
 		// new user
 		// hash password and create field
 		passwordHash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-		result, _ := db.Exec("INSERT INTO users (username, password_hash) VALUES (?, ?)", username, passwordHash)
-		id, _ := result.LastInsertId()
-		userID = int(id)
+		db.QueryRow("INSERT INTO users (username, password_hash) VALUES ($1, $2) RETURNING id", username, passwordHash).Scan(&userID)
 		log.Printf("created new user: %s (id: %d)", username, userID)
 	} else if err != nil {
 		// database error

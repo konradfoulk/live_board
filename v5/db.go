@@ -4,11 +4,16 @@ import (
 	"database/sql"
 	"os"
 
-	_ "modernc.org/sqlite"
+	_ "github.com/lib/pq"
 )
 
 func initDatabase() *sql.DB {
-	db, _ := sql.Open("sqlite", "./app.db")
+	connStr := os.Getenv("DATABASE_URL")
+	if connStr == "" {
+		connStr = "postgres://postgres:postgres@localhost:5432/liveboard?sslmode=disable"
+	}
+
+	db, _ := sql.Open("postgres", connStr)
 
 	schema, _ := os.ReadFile("schema.sql")
 	db.Exec(string(schema))

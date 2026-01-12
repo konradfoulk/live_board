@@ -121,10 +121,10 @@ func (c *Client) disconnect() {
 
 func (c *Client) loadChatHistory(roomID int, roomName string) {
 	rows, err := db.Query(`
-        SELECT username, content 
-        FROM messages 
-        WHERE room = ? 
-        ORDER BY created_at DESC 
+        SELECT username, content
+        FROM messages
+        WHERE room = $1
+        ORDER BY created_at DESC
         LIMIT 200`, roomID)
 	if err != nil {
 		// db error
@@ -155,7 +155,7 @@ func (c *Client) loadChatHistory(roomID int, roomName string) {
 }
 
 func (c *Client) persistMessage(roomID int, content string) {
-	db.Exec(`INSERT INTO messages (room, user, username, content) VALUES (?, ?, ?, ?)`,
+	db.Exec(`INSERT INTO messages (room, "user", username, content) VALUES ($1, $2, $3, $4)`,
 		roomID, c.id, c.username, content)
 }
 
