@@ -206,12 +206,19 @@ func (r *Room) run() {
 		r.clientsMutex.RUnlock()
 
 		if sent {
-			msg := WSMessage{
-				Type: "notification",
-				Room: r.name,
+			var typeCheck struct {
+				Type string `json:"type"`
 			}
-			jsonMsg, _ := json.Marshal(msg)
-			r.hub.broadcast <- jsonMsg
+			json.Unmarshal(message, &typeCheck)
+
+			if typeCheck.Type == "message" {
+				msg := WSMessage{
+					Type: "notification",
+					Room: r.name,
+				}
+				jsonMsg, _ := json.Marshal(msg)
+				r.hub.broadcast <- jsonMsg
+			}
 		}
 	}
 }
