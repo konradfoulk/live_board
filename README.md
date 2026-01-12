@@ -72,4 +72,6 @@ The application uses a Hub pattern for managing WebSocket connections:
 - **Hub** - Central broker managing all clients and rooms
 - **Client** - Represents a WebSocket connection with dedicated read/write goroutines
 - **Room** - Chat room with broadcast channel for message distribution
+- All real-time communication is done over **WebSockets**
+- All other operations are completed through the **HTTP REST API**
 
