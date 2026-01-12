@@ -13,10 +13,12 @@ Real-time multi-room chat application built with Go backend and vanilla JavaScri
 go build
 
 # Run the server (serves on port 8080)
+# Set DATABASE_URL first (or uses default localhost connection)
+set DATABASE_URL=postgres://user:password@localhost:5432/liveboard?sslmode=disable
 go run server.go models.go db.go
 ```
 
-The server serves static files from `./static/` and creates/initializes the SQLite database (`app.db`) on startup using `schema.sql`.
+The server serves static files from `./static/` and initializes the PostgreSQL database on startup using `schema.sql`.
 
 ## Architecture
 
@@ -45,9 +47,13 @@ The server serves static files from `./static/` and creates/initializes the SQLi
 - `scripts.js` - WebSocket client, message handling, chat logic
 - `ui.js` - DOM manipulation, room buttons, form events
 
-### Database (SQLite)
+### Database (PostgreSQL)
 
 Schema in `schema.sql`: users, rooms, messages tables. Messages foreign-key to rooms (with cascade delete) and users.
+
+Connection configured via `DATABASE_URL` environment variable. Default: `postgres://postgres:postgres@localhost:5432/liveboard?sslmode=disable`
+
+Note: Special characters in passwords must be URL-encoded (e.g., `@` becomes `%40`).
 
 ## WebSocket Message Types
 
