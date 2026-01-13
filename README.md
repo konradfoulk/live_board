@@ -10,7 +10,7 @@ A real-time multi-room chat application built with Go and vanilla JavaScript.
 - Multiple room support with create/delete functionality
 - User authentication with bcrypt password hashing
 - Message persistence (last 200 messages per room)
-- Live user count display and presence system
+- Presence system including notifications and live use count
 - Auto-created accounts on first login
 - Deployment on Render
 
