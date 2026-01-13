@@ -207,11 +207,12 @@ func (r *Room) run() {
 
 		if sent {
 			var typeCheck struct {
-				Type string `json:"type"`
+				Type        string `json:"type"`
+				MessageType string `json:"messageType"`
 			}
 			json.Unmarshal(message, &typeCheck)
 
-			if typeCheck.Type == "message" {
+			if typeCheck.Type == "message" && typeCheck.MessageType == "chat_message" {
 				msg := WSMessage{
 					Type: "notification",
 					Room: r.name,
