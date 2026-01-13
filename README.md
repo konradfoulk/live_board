@@ -2,7 +2,7 @@
 
 A real-time multi-room chat application built with Go and vanilla JavaScript.
 
-**Live Demo:** [https://live-board.onrender.com](https://live-board.onrender.com)
+**Live Demo:** [https://live-board.onrender.com](https://live-board.onrender.com) (slightly broken due to free tier with Render hosting)
 
 ## Features
 
